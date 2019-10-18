@@ -12,7 +12,7 @@ public class GameModuleIndex {
     private static List<GameModule> modules = new ArrayList<>();
     private static Program program; // Yeah we only cache one program..
 
-//    private static final long RAM_OFFSET = 0x80000000L;
+    //    private static final long RAM_OFFSET = 0x80000000L;
     private static final long MAIN_LOOP_REL_OFFSET = 0x80270100L; // Always loaded
     private static final long ADDITIONAL_REL_OFFSET = 0x808F3FE0L; // Loaded REL dependent on game mode
     private static final long REL_HEADER_SIZE = 0xD8L;
@@ -29,7 +29,7 @@ public class GameModuleIndex {
             return addr.getOffset() - module.getStartAddress().getOffset() + ADDITIONAL_REL_OFFSET + REL_HEADER_SIZE;
         }
     }
-    
+
     /**
      * Converts an address in GC RAM to a Ghidra address
      * 
@@ -41,28 +41,28 @@ public class GameModuleIndex {
             return offset;
         } else if (offset < ADDITIONAL_REL_OFFSET) {
             return offset -
-                MAIN_LOOP_REL_OFFSET -
-                REL_HEADER_SIZE +
-                getModuleByBaseName(program, "main_loop_").getStartAddress().getOffset();
+                    MAIN_LOOP_REL_OFFSET -
+                    REL_HEADER_SIZE +
+                    getModuleByBaseName(program, "main_loop_").getStartAddress().getOffset();
         } else {
-			AskDialog<GameModule> dialog = new AskDialog<>(
-			        null,
-			        "Pick module",
-			        String.format(
-                        "Could not determine module for address 0x%08x (Module is loaded as an additional REL) - Please pick the loaded module",
-                        offset
-                    ),
-			        AskDialog.STRING,
-			        getModulesForProgram(program),
-			        null
-			        );
-			if (dialog.isCanceled()) return null;
-			GameModule module = dialog.getChoiceValue();
+            AskDialog<GameModule> dialog = new AskDialog<>(
+                    null,
+                    "Pick module",
+                    String.format(
+                            "Could not determine module for address 0x%08x (Module is loaded as an additional REL) - Please pick the loaded module",
+                            offset
+                            ),
+                    AskDialog.STRING,
+                    getModulesForProgram(program),
+                    null
+                    );
+            if (dialog.isCanceled()) return null;
+            GameModule module = dialog.getChoiceValue();
 
             return offset -
-                ADDITIONAL_REL_OFFSET -
-                REL_HEADER_SIZE +
-                module.getStartAddress().getOffset();
+                    ADDITIONAL_REL_OFFSET -
+                    REL_HEADER_SIZE +
+                    module.getStartAddress().getOffset();
         }
     }
 
