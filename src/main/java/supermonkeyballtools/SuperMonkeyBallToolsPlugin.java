@@ -15,10 +15,22 @@
  */
 package supermonkeyballtools;
 
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+
+import docking.action.DockingAction;
+import docking.action.KeyBindingData;
+import docking.action.MenuData;
+import docking.tool.ToolConstants;
+import ghidra.app.context.NavigatableActionContext;
+import ghidra.app.context.NavigatableContextAction;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
+import ghidra.app.services.GoToService;
+import ghidra.app.util.dialog.AskAddrDialog;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
 
 //@formatter:off
@@ -32,6 +44,7 @@ import ghidra.program.util.ProgramLocation;
 //@formatter:on
 public class SuperMonkeyBallToolsPlugin extends ProgramPlugin {
     SmbAddressConvertComponent addressConvertComp;
+    GoToService goToService;
 
     /**
      * Plugin constructor.
@@ -47,6 +60,42 @@ public class SuperMonkeyBallToolsPlugin extends ProgramPlugin {
         // String topicName = this.getClass().getPackage().getName();
         // String anchorName = "HelpAnchor";
         // provider.setHelpLocation(new HelpLocation(topicName, anchorName));
+        
+		DockingAction goToRamAction = new NavigatableContextAction("SMB: Go To GameCube RAM Address", getName()) {
+			@Override
+			public void actionPerformed(NavigatableActionContext context) {
+                AskAddrDialog dialog = new AskAddrDialog(
+                        "Jump to GameCube RAM address",
+                        "Jump to GameCube RAM address",
+                        currentLocation.getProgram().getAddressFactory(),
+                        currentLocation.getAddress()
+                        );
+                if (dialog.isCanceled()) return;
+                Address addr = dialog.getValueAsAddress();
+                Long ghidraOffset = GameModuleIndex.ramToAddressUser(currentLocation.getProgram(), addr);
+                if (ghidraOffset == null) return;
+                Address ghidraAddr = currentLocation.getAddress().getAddressSpace().getAddress(ghidraOffset);
+
+                GoToService service = tool.getService(GoToService.class);
+                if (service != null) {
+                    service.goTo(ghidraAddr);
+                }
+			}
+		};
+		// action.setHelpLocation(new HelpLocation(HelpTopics.NAVIGATION, action.getName()));
+		goToRamAction.setMenuBarData(
+            new MenuData(
+                new String[] {ToolConstants.MENU_NAVIGATION, "SMB: Go To GameCube RAM Address..." },
+                null,
+                "SMBGoToGamecubeRamAddress",
+                MenuData.NO_MNEMONIC,
+                null
+                )
+            );
+
+		goToRamAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_G, InputEvent.SHIFT_DOWN_MASK));
+
+		tool.addAction(goToRamAction);
     }
 
     @Override

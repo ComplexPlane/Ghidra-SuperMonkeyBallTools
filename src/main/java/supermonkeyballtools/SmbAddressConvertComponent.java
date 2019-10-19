@@ -29,6 +29,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
 
     public SmbAddressConvertComponent(Plugin plugin, String owner) {
         super(plugin.getTool(), "SMB: Convert Address", owner);
+        
         buildPanel();
         createActions();
     }
@@ -48,8 +49,8 @@ public class SmbAddressConvertComponent extends ComponentProvider {
             @Override
             public void actionPerformed(ActionContext context) {
                 AskAddrDialog dialog = new AskAddrDialog(
-                        "Jump to GC RAM address",
-                        "Jump to GC RAM address",
+                        "Jump to GameCube RAM address",
+                        "Jump to GameCube RAM address",
                         cursorLoc.getProgram().getAddressFactory(),
                         cursorLoc.getAddress()
                         );

@@ -6,7 +6,10 @@ Utilities to help reverse engineer Super Monkey Ball 2 with [Ghidra](https://git
 - Converting a Ghidra address to a location in a .dol/.rel file
 - Converting an address in GameCube memory to a Ghidra address
 
-Note: You will need to pop open `Window > SMB: Convert Address` in CodeBrowser to access this
+This is accessible from `Window > SMB: Convert Address` in CodeBrowser
+
+## Default keybinds
+- **Shift-G**: Go to GameCube RAM address
 
 ## Building
 - Ensure you have `JAVA_HOME` set to the path of your JDK installation
