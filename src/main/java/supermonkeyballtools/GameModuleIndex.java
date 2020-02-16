@@ -113,6 +113,7 @@ public class GameModuleIndex {
      */
     public static void buildModuleList(Program program) {
         GameModuleIndex.program = program;
+        modules.clear();
 
         MemoryBlock prevBlock = null;
         String prevModuleId = null;
@@ -151,7 +152,7 @@ public class GameModuleIndex {
             // New module
             GameModule module = new GameModule(moduleId);
             module.setStartAddress(block.getStart());
-            //endAddr will be set in a future loop iteration
+            // endAddr will be set in a future loop iteration
 
             modules.add(module);
 

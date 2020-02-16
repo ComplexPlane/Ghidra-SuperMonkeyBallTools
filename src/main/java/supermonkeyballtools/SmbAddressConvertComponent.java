@@ -1,8 +1,14 @@
 package supermonkeyballtools;
 
 import java.awt.BorderLayout;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JComponent;
+import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -15,8 +21,10 @@ import ghidra.app.services.GoToService;
 import ghidra.app.util.dialog.AskAddrDialog;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.database.ProgramContentHandler;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
 import resources.Icons;
@@ -26,6 +34,8 @@ public class SmbAddressConvertComponent extends ComponentProvider {
     private JTextArea textArea;
 
     private ProgramLocation cursorLoc;
+    
+    private File lastSymbolExportFile = new File("smb2_symbol_map.json");
 
     public SmbAddressConvertComponent(Plugin plugin, String owner) {
         super(plugin.getTool(), "SMB: Convert Address", owner);
@@ -84,6 +94,36 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         rebuildAction.setEnabled(true);
         rebuildAction.markHelpUnnecessary();
         dockingTool.addLocalAction(this, rebuildAction);
+
+        // Export cube_code symbol map
+        DockingAction exportMapAction = new DockingAction("Export cube_code symbol map", getName()) {
+            @Override
+            public void actionPerformed(ActionContext context) {
+                JFileChooser dialog = new JFileChooser();
+                dialog.setSelectedFile(lastSymbolExportFile);
+                dialog.setDialogTitle("Specify where to save cube_code symbol map");
+                int result = dialog.showSaveDialog(null);
+                
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    File fileToSave = dialog.getSelectedFile();
+                    lastSymbolExportFile = fileToSave;
+                    
+                    String json = generateSymbolMap();
+                    
+                    try (PrintWriter writer = new PrintWriter(fileToSave)) {
+                        writer.print(json);
+                    } catch (FileNotFoundException e) {
+                        Msg.error(getClass(), e);
+                    }
+                    
+                    Msg.info(getClass(), "Exported cube_code symbol map for program " + cursorLoc.getProgram().getName());
+                }
+            }
+        };
+        exportMapAction.setToolBarData(new ToolBarData(ProgramContentHandler.PROGRAM_ICON, null));
+        exportMapAction.setEnabled(true);
+        exportMapAction.markHelpUnnecessary();
+        dockingTool.addLocalAction(this, exportMapAction);
     }
 
     private void updateLocations() {
@@ -109,6 +149,25 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         } else {
             textArea.setText("Cursor not in module");
         }
+    }
+    
+    private String generateSymbolMap() {
+        String json = "{\n" +
+                "  \"symbols\": {\n";
+
+        Program program = cursorLoc.getProgram();
+        List<String> symbol_strs = new ArrayList<>();
+        for (Symbol s : program.getSymbolTable().getSymbolIterator()) {
+            GameModule module = GameModuleIndex.getModuleContainingAddress(program, s.getAddress());
+            if (module == null || module.getBaseName() == "MAIN_") {
+                symbol_strs.add(String.format("    \"%s\": { \"module_id\": 0, \"section_id\": 0, \"offset\": %d }", s.getName(), s.getAddress().getOffset()));
+            }
+        }
+        
+        return json +
+                String.join(",\n", symbol_strs) + "\n" +
+                "  }\n" +
+                "}\n";
     }
 
     @Override
