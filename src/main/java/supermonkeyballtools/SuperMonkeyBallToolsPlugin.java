@@ -54,7 +54,7 @@ public class SuperMonkeyBallToolsPlugin extends ProgramPlugin {
      */
     public SuperMonkeyBallToolsPlugin(PluginTool tool) {
         super(tool, true, true);
-        regionIndex = new GameModuleIndex(currentProgram);
+        regionIndex = new GameModuleIndex();
 
         String pluginName = getName();
         addressConvertComp = new SmbAddressConvertComponent(this, pluginName, regionIndex);
@@ -74,7 +74,7 @@ public class SuperMonkeyBallToolsPlugin extends ProgramPlugin {
                         );
                 if (dialog.isCanceled()) return;
                 Address addr = dialog.getValueAsAddress();
-                Long ghidraOffset = regionIndex.ramToAddressUser(addr);
+                Long ghidraOffset = regionIndex.ramToAddressUser(currentProgram, addr);
                 if (ghidraOffset == null) return;
                 Address ghidraAddr = currentLocation.getAddress().getAddressSpace().getAddress(ghidraOffset);
 

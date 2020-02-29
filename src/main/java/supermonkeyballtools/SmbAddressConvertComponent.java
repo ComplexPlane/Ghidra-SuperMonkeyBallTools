@@ -50,7 +50,6 @@ public class SmbAddressConvertComponent extends ComponentProvider {
     private void buildPanel() {
         panel = new JPanel(new BorderLayout());
         textArea = new JTextArea();
-        textArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
         textArea.setEditable(false);
         updateLocations();
         panel.add(new JScrollPane(textArea));
@@ -70,7 +69,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
                         );
                 if (dialog.isCanceled()) return;
                 Address addr = dialog.getValueAsAddress();
-                Long ghidraOffset = regionIndex.ramToAddressUser(addr);
+                Long ghidraOffset = regionIndex.ramToAddressUser(cursorLoc.getProgram(), addr);
                 if (ghidraOffset == null) return;
                 Address ghidraAddr = cursorLoc.getAddress().getAddressSpace().getAddress(ghidraOffset);
 
@@ -121,10 +120,10 @@ public class SmbAddressConvertComponent extends ComponentProvider {
 
         Program program = cursorLoc.getProgram();
         Address ghidraAddr = cursorLoc.getAddress();
-        GameMemoryRegion region = regionIndex.getRegionContainingAddress(ghidraAddr.getOffset());
+        GameMemoryRegion region = regionIndex.getRegionContainingAddress(cursorLoc.getProgram(), ghidraAddr.getOffset());
 
         String fileLocStr;
-        Long fileLoc = regionIndex.addressToFile(ghidraAddr);
+        Long fileLoc = regionIndex.addressToFile(cursorLoc.getProgram(), ghidraAddr);
         if (fileLoc == null) {
             fileLocStr = "NONE";
         } else {
@@ -140,7 +139,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
                     "REL/DOL file location: %s",
                     region.name,
                     ghidraAddr.getOffset(),
-                    regionIndex.addressToRam(ghidraAddr),
+                    regionIndex.addressToRam(cursorLoc.getProgram(), ghidraAddr),
                     fileLocStr
                     )
                 );
@@ -156,7 +155,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         Program program = cursorLoc.getProgram();
         List<String> symbol_strs = new ArrayList<>();
         for (Symbol s : program.getSymbolTable().getSymbolIterator()) {
-            GameMemoryRegion module = regionIndex.getRegionContainingAddress(s.getAddress().getOffset());
+            GameMemoryRegion module = regionIndex.getRegionContainingAddress(cursorLoc.getProgram(), s.getAddress().getOffset());
             if (module == null || module.getModuleName() == "MAIN_") {
                 symbol_strs.add(String.format("    \"%s\": { \"module_id\": 0, \"section_id\": 0, \"offset\": %d }", s.getName(), s.getAddress().getOffset()));
             }

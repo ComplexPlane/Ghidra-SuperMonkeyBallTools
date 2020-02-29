@@ -16,18 +16,21 @@ public class GameModuleIndex {
     private static final long ADDITIONAL_REL_OFFSET = 0x808F3FE0L; // Loaded REL dependent on game mode
 
     private List<GameMemoryRegion> regions;
-    private Program program;
 
-    GameModuleIndex(Program program) {
-        this.program = program;
-        buildMemoryRegionList();
-    }
+    // Cache a single Program's memory regions
+    // Not initialized in constructor because currentProgram is invalid in constructor of
+    // SuperMonkeyBallToolsPlugin class
+    // Perhaps it's not the responsibility of this class to lazily-initialize itself though
+    private Program program;
 
     public List<GameMemoryRegion> getProgramMemoryRegions() {
         return regions;
     }
 
-    private void buildMemoryRegionList() {
+    private void ensureRegionMemoryList(Program program) {
+        if (program == this.program) return;
+
+        this.program = program;
         regions = new ArrayList<>();
 
         // Build initial list without things like RAM location filled in
@@ -145,7 +148,9 @@ public class GameModuleIndex {
         }
     }
 
-    public Long ramToAddressUser(Address addr) {
+    public Long ramToAddressUser(Program program, Address addr) {
+        ensureRegionMemoryList(program);
+
         long offset = addr.getOffset();
 
         // Generate list of candidate memory regions
@@ -188,9 +193,11 @@ public class GameModuleIndex {
         }
     }
 
-    public long addressToRam(Address addr) {
+    public long addressToRam(Program program, Address addr) {
+        ensureRegionMemoryList(program);
+
         long offset = addr.getOffset();
-        GameMemoryRegion region = getRegionContainingAddress(offset);
+        GameMemoryRegion region = getRegionContainingAddress(program, offset);
         if (region != null) {
             return offset - region.ghidraAddr + region.ramAddr;
         }
@@ -199,9 +206,11 @@ public class GameModuleIndex {
         return offset;
     }
 
-    public Long addressToFile(Address addr) {
+    public Long addressToFile(Program program, Address addr) {
+        ensureRegionMemoryList(program);
+
         long offset = addr.getOffset();
-        GameMemoryRegion region = getRegionContainingAddress(offset);
+        GameMemoryRegion region = getRegionContainingAddress(program, offset);
         if (region != null && region.fileAddr != null) {
             return offset - region.ghidraAddr + region.fileAddr;
         }
@@ -211,7 +220,9 @@ public class GameModuleIndex {
         return null;
     }
 
-    public GameMemoryRegion getRegionContainingAddress(long addr) {
+    public GameMemoryRegion getRegionContainingAddress(Program program, long addr) {
+        ensureRegionMemoryList(program);
+
         for (GameMemoryRegion region : regions) {
             if (region.isAddressInRegion(addr)) {
                 return region;
