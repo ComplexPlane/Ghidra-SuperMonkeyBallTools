@@ -92,49 +92,49 @@ public class GameModuleIndex {
         for (GameMemoryRegion region : regions) {
             switch (region.name) {
                 case "mkb2.main_loop_.uninitialized0":
-                    region.ramAddr = 0x8054c8e0;
+                    region.ramAddr = 0x8054c8e0L;
                     break;
                 case "mkb2.main_game_.uninitialized0":
-                    region.ramAddr = 0x8097f4a0;
+                    region.ramAddr = 0x8097f4a0L;
                     break;
                 case "mkb2.sel_ngc_.uninitialized0":
-                    region.ramAddr = 0x80949ca0;
+                    region.ramAddr = 0x80949ca0L;
                     break;
                 case "mkb2.rel_mini_bowling_.uninitialized0":
-                    region.ramAddr = 0x8091e840;
+                    region.ramAddr = 0x8091e840L;
                     break;
                 case "mkb2.rel_mini_billiards_.uninitialized0":
-                    region.ramAddr = 0x80942dc0;
+                    region.ramAddr = 0x80942dc0L;
                     break;
                 case "mkb2.race2_.uninitialized0":
-                    region.ramAddr = 0x809234e0;
+                    region.ramAddr = 0x809234e0L;
                     break;
                 case "mkb2.golf2_.uninitialized0":
-                    region.ramAddr = 0x80942ce0;
+                    region.ramAddr = 0x80942ce0L;
                     break;
                 case "mkb2.mini_fight2_.uninitialized0":
-                    region.ramAddr = 0x80939ac0;
+                    region.ramAddr = 0x80939ac0L;
                     break;
                 case "mkb2.pilot2_.uninitialized0":
-                    region.ramAddr = 0x80910bc0;
+                    region.ramAddr = 0x80910bc0L;
                     break;
                 case "mkb2.boat_.uninitialized0":
-                    region.ramAddr = 0x80928980;
+                    region.ramAddr = 0x80928980L;
                     break;
                 case "mkb2.shooting_.uninitialized0":
-                    region.ramAddr = 0x809a5740;
+                    region.ramAddr = 0x809a5740L;
                     break;
                 case "mkb2.rel_mini_futsal_.uninitialized0":
-                    region.ramAddr = 0x809369a0;
+                    region.ramAddr = 0x809369a0L;
                     break;
                 case "mkb2.dogfight_.uninitialized0":
-                    region.ramAddr = 0x809150c0;
+                    region.ramAddr = 0x809150c0L;
                     break;
                 case "mkb2.baseball_.uninitialized0":
-                    region.ramAddr = 0x809b06a0;
+                    region.ramAddr = 0x809b06a0L;
                     break;
                 case "mkb2.tennis_.uninitialized0":
-                    region.ramAddr = 0x8092caa0;
+                    region.ramAddr = 0x8092caa0L;
                     break;
                 case "mkb2.exoption_.uninitialized0":
                 case "mkb2.rel_sample_.uninitialized0":
