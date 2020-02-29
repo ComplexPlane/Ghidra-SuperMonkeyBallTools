@@ -14,6 +14,7 @@ public class GameModuleIndex {
     private static final long MAIN_LOOP_REL_RAM_OFFSET = 0x80270100L; // Always loaded
     private static final long MAIN_LOOP_REL_GHIDRA_OFFSET = 0x80199fa0L;
     private static final long ADDITIONAL_REL_OFFSET = 0x808F3FE0L; // Loaded REL dependent on game mode
+    private static final long REL_HEADER_SIZE = 0xD8L;
 
     private List<GameMemoryRegion> regions;
 
@@ -78,11 +79,13 @@ public class GameModuleIndex {
                         break;
 
                     case "mkb2.main_loop_":
-                        region.ramAddr = region.ghidraAddr - MAIN_LOOP_REL_GHIDRA_OFFSET + MAIN_LOOP_REL_RAM_OFFSET;
+                        region.ramAddr = region.ghidraAddr - MAIN_LOOP_REL_GHIDRA_OFFSET
+                                + MAIN_LOOP_REL_RAM_OFFSET + REL_HEADER_SIZE;
                         break;
 
                     default:
-                        region.ramAddr = region.ghidraAddr - lastModuleStart + ADDITIONAL_REL_OFFSET;
+                        region.ramAddr = region.ghidraAddr - lastModuleStart
+                                + ADDITIONAL_REL_OFFSET + REL_HEADER_SIZE;
                         break;
                 }
             }
