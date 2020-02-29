@@ -46,7 +46,8 @@ public class GameMemoryRegion {
     }
 
     public boolean isRamAddressInRegion(long addr) {
-        return (addr - ramAddr) < length;
+        long delta = addr - ramAddr;
+        return delta >= 0 && delta < length;
     }
 
     @Override

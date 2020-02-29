@@ -177,9 +177,9 @@ public class GameModuleIndex {
         } else {
             AskDialog<GameMemoryRegion> dialog = new AskDialog<>(
                     null,
-                    "Pick module",
+                    "Pick region",
                     String.format(
-                            "Could not determine module for address 0x%08x (Module is loaded as an additional REL) - Please pick the loaded module",
+                            "Could not determine region for address 0x%08x (region is loaded in an additional REL) - Please pick the loaded region",
                             offset
                     ),
                     AskDialog.STRING,
