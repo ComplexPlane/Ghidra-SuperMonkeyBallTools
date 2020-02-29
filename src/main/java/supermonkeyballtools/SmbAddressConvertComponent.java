@@ -27,6 +27,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
+import ghidra.util.SystemUtilities;
 import resources.Icons;
 
 public class SmbAddressConvertComponent extends ComponentProvider {
@@ -50,6 +51,9 @@ public class SmbAddressConvertComponent extends ComponentProvider {
     private void buildPanel() {
         panel = new JPanel(new BorderLayout());
         textArea = new JTextArea();
+        Font font = new Font(Font.MONOSPACED, Font.PLAIN, 12);
+        font = SystemUtilities.adjustForFontSizeOverride(font);
+        textArea.setFont(font);
         textArea.setEditable(false);
         updateLocations();
         panel.add(new JScrollPane(textArea));
