@@ -1,6 +1,6 @@
 package supermonkeyballtools;
 
-import java.awt.BorderLayout;
+import java.awt.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -37,8 +37,11 @@ public class SmbAddressConvertComponent extends ComponentProvider {
     
     private File lastSymbolExportFile = new File("smb2_symbol_map.json");
 
-    public SmbAddressConvertComponent(Plugin plugin, String owner) {
+    private GameModuleIndex regionIndex;
+
+    public SmbAddressConvertComponent(Plugin plugin, String owner, GameModuleIndex regionIndex) {
         super(plugin.getTool(), "SMB: Convert Address", owner);
+        this.regionIndex = regionIndex;
         
         buildPanel();
         createActions();
@@ -47,6 +50,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
     private void buildPanel() {
         panel = new JPanel(new BorderLayout());
         textArea = new JTextArea();
+        textArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
         textArea.setEditable(false);
         updateLocations();
         panel.add(new JScrollPane(textArea));
@@ -66,7 +70,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
                         );
                 if (dialog.isCanceled()) return;
                 Address addr = dialog.getValueAsAddress();
-                Long ghidraOffset = GameModuleIndex.ramToAddressUser(cursorLoc.getProgram(), addr);
+                Long ghidraOffset = regionIndex.ramToAddressUser(addr);
                 if (ghidraOffset == null) return;
                 Address ghidraAddr = cursorLoc.getAddress().getAddressSpace().getAddress(ghidraOffset);
 
@@ -80,20 +84,6 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         jumpToGcRamAction.setEnabled(true);
         jumpToGcRamAction.markHelpUnnecessary();
         dockingTool.addLocalAction(this, jumpToGcRamAction);
-
-        // Rebuild module list
-        DockingAction rebuildAction = new DockingAction("Rebuild module list", getName()) {
-            @Override
-            public void actionPerformed(ActionContext context) {
-                GameModuleIndex.buildModuleList(cursorLoc.getProgram());
-                Msg.info(getClass(), "Module list rebuilt for program " + cursorLoc.getProgram().getName());
-                updateLocations();
-            }
-        };
-        rebuildAction.setToolBarData(new ToolBarData(Icons.REFRESH_ICON, null));
-        rebuildAction.setEnabled(true);
-        rebuildAction.markHelpUnnecessary();
-        dockingTool.addLocalAction(this, rebuildAction);
 
         // Export cube_code symbol map
         DockingAction exportMapAction = new DockingAction("Export cube_code symbol map", getName()) {
@@ -131,19 +121,27 @@ public class SmbAddressConvertComponent extends ComponentProvider {
 
         Program program = cursorLoc.getProgram();
         Address ghidraAddr = cursorLoc.getAddress();
-        GameModule module = GameModuleIndex.getModuleContainingAddress(program, ghidraAddr);
+        GameMemoryRegion region = regionIndex.getRegionContainingAddress(ghidraAddr.getOffset());
 
-        if (module != null) {
+        String fileLocStr;
+        Long fileLoc = regionIndex.addressToFile(ghidraAddr);
+        if (fileLoc == null) {
+            fileLocStr = "NONE";
+        } else {
+            fileLocStr = String.format("0x%08x", fileLoc);
+        }
+
+        if (region != null) {
             textArea.setText(
                 String.format(
-                    "Module               : %s\n" +
+                    "Region name          : %s\n" +
                     "Ghidra location      : 0x%08x\n" +
                     "GC RAM location      : 0x%08x\n" +
-                    "REL/DOL file location: 0x%08x",
-                    module.getBaseName(),
+                    "REL/DOL file location: %s",
+                    region.name,
                     ghidraAddr.getOffset(),
-                    GameModuleIndex.addressToRam(ghidraAddr, module),
-                    GameModuleIndex.addressToFile(ghidraAddr, module)
+                    regionIndex.addressToRam(ghidraAddr),
+                    fileLocStr
                     )
                 );
         } else {
@@ -158,8 +156,8 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         Program program = cursorLoc.getProgram();
         List<String> symbol_strs = new ArrayList<>();
         for (Symbol s : program.getSymbolTable().getSymbolIterator()) {
-            GameModule module = GameModuleIndex.getModuleContainingAddress(program, s.getAddress());
-            if (module == null || module.getBaseName() == "MAIN_") {
+            GameMemoryRegion module = regionIndex.getRegionContainingAddress(s.getAddress().getOffset());
+            if (module == null || module.getModuleName() == "MAIN_") {
                 symbol_strs.add(String.format("    \"%s\": { \"module_id\": 0, \"section_id\": 0, \"offset\": %d }", s.getName(), s.getAddress().getOffset()));
             }
         }
