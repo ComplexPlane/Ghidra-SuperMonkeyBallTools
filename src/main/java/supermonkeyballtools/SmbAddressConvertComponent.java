@@ -166,7 +166,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         List<String> symbol_strs = new ArrayList<>();
         for (Symbol s : program.getSymbolTable().getSymbolIterator()) {
             GameMemoryRegion module = regionIndex.getRegionContainingAddress(cursorLoc.getProgram(), s.getAddress().getOffset());
-            if (module == null || module.getModuleName() == "MAIN_") {
+            if (module != null && (module.regionType == RegionType.HARDWARE || module.name.startsWith("MAIN_"))) {
                 symbol_strs.add(String.format("    \"%s\": { \"module_id\": 0, \"section_id\": 0, \"offset\": %d }", s.getName(), s.getAddress().getOffset()));
             }
         }
