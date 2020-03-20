@@ -24,6 +24,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramContentHandler;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
@@ -134,14 +135,19 @@ public class SmbAddressConvertComponent extends ComponentProvider {
             fileLocStr = String.format("0x%08x", fileLoc);
         }
 
+        // Get whether the block is read-write or read-only
+        MemoryBlock block = program.getMemory().getBlock(ghidraAddr);
+        String writeableStatus = block.isWrite() ? "read-write" : "read-only";
+
         if (region != null) {
             textArea.setText(
                 String.format(
-                    "Region name          : %s\n" +
+                    "Region               : %s (%s)\n" +
                     "Ghidra location      : 0x%08x\n" +
                     "GC RAM location      : 0x%08x\n" +
                     "REL/DOL file location: %s",
                     region.name,
+                    writeableStatus,
                     ghidraAddr.getOffset(),
                     regionIndex.addressToRam(cursorLoc.getProgram(), ghidraAddr),
                     fileLocStr
