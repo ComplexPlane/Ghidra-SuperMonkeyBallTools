@@ -45,6 +45,8 @@ import ghidra.program.util.ProgramLocation;
 public class SuperMonkeyBallToolsPlugin extends ProgramPlugin {
     SmbAddressConvertComponent addressConvertComp;
     GoToService goToService;
+    private GameModuleIndex regionIndex;
+    private Address lastGcRamAddress;
 
     /**
      * Plugin constructor.
@@ -53,9 +55,10 @@ public class SuperMonkeyBallToolsPlugin extends ProgramPlugin {
      */
     public SuperMonkeyBallToolsPlugin(PluginTool tool) {
         super(tool, true, true);
+        regionIndex = new GameModuleIndex();
 
         String pluginName = getName();
-        addressConvertComp = new SmbAddressConvertComponent(this, pluginName);
+        addressConvertComp = new SmbAddressConvertComponent(this, pluginName, regionIndex);
 
         // String topicName = this.getClass().getPackage().getName();
         // String anchorName = "HelpAnchor";
@@ -64,15 +67,20 @@ public class SuperMonkeyBallToolsPlugin extends ProgramPlugin {
 		DockingAction goToRamAction = new NavigatableContextAction("SMB: Go To GameCube RAM Address", getName()) {
 			@Override
 			public void actionPerformed(NavigatableActionContext context) {
+			    if (lastGcRamAddress == null) {
+			        // Should be 0x80000000 both in Ghidra and in gamecube RAM
+                    lastGcRamAddress = currentLocation.getProgram().getMinAddress();
+                }
+
                 AskAddrDialog dialog = new AskAddrDialog(
                         "Jump to GameCube RAM address",
                         "Jump to GameCube RAM address",
                         currentLocation.getProgram().getAddressFactory(),
-                        currentLocation.getAddress()
+                        lastGcRamAddress
                         );
                 if (dialog.isCanceled()) return;
-                Address addr = dialog.getValueAsAddress();
-                Long ghidraOffset = GameModuleIndex.ramToAddressUser(currentLocation.getProgram(), addr);
+                lastGcRamAddress = dialog.getValueAsAddress();
+                Long ghidraOffset = regionIndex.ramToAddressUser(currentProgram, lastGcRamAddress);
                 if (ghidraOffset == null) return;
                 Address ghidraAddr = currentLocation.getAddress().getAddressSpace().getAddress(ghidraOffset);
 
