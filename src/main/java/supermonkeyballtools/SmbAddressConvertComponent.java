@@ -29,7 +29,6 @@ import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
-import resources.Icons;
 
 public class SmbAddressConvertComponent extends ComponentProvider {
     private JPanel panel;
@@ -90,34 +89,28 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         dockingTool.addLocalAction(this, jumpToGcRamAction);
 
         // Export cube_code symbol map
-        DockingAction exportMapAction = new DockingAction("Export cube_code symbol map", getName()) {
+        DockingAction exportCubeCodeMapAction = new DockingAction("Export cube_code symbol map", getName()) {
             @Override
             public void actionPerformed(ActionContext context) {
-                JFileChooser dialog = new JFileChooser();
-                dialog.setSelectedFile(lastSymbolExportFile);
-                dialog.setDialogTitle("Specify where to save cube_code symbol map");
-                int result = dialog.showSaveDialog(null);
-                
-                if (result == JFileChooser.APPROVE_OPTION) {
-                    File fileToSave = dialog.getSelectedFile();
-                    lastSymbolExportFile = fileToSave;
-                    
-                    String json = generateSymbolMap();
-                    
-                    try (PrintWriter writer = new PrintWriter(fileToSave)) {
-                        writer.print(json);
-                    } catch (FileNotFoundException e) {
-                        Msg.error(getClass(), e);
-                    }
-                    
-                    Msg.info(getClass(), "Exported cube_code symbol map for program " + cursorLoc.getProgram().getName());
-                }
+                saveSymbolMap("cube_code", generateCubeCodeSymbolMap());
             }
         };
-        exportMapAction.setToolBarData(new ToolBarData(ProgramContentHandler.PROGRAM_ICON, null));
-        exportMapAction.setEnabled(true);
-        exportMapAction.markHelpUnnecessary();
-        dockingTool.addLocalAction(this, exportMapAction);
+        exportCubeCodeMapAction.setToolBarData(new ToolBarData(ProgramContentHandler.PROGRAM_ICON, null));
+        exportCubeCodeMapAction.setEnabled(true);
+        exportCubeCodeMapAction.markHelpUnnecessary();
+        dockingTool.addLocalAction(this, exportCubeCodeMapAction);
+
+        // Export ApeSphere-style symbol map
+        DockingAction exportApeSphereMapAction = new DockingAction("Export ApeSphere symbol map", getName()) {
+            @Override
+            public void actionPerformed(ActionContext context) {
+                saveSymbolMap("ApeSphere", generateApeSphereSymbolMap());
+            }
+        };
+        exportApeSphereMapAction.setToolBarData(new ToolBarData(ProgramContentHandler.PROGRAM_ICON, null));
+        exportApeSphereMapAction.setEnabled(true);
+        exportApeSphereMapAction.markHelpUnnecessary();
+        dockingTool.addLocalAction(this, exportApeSphereMapAction);
     }
 
     private void updateLocations() {
@@ -158,23 +151,52 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         }
     }
     
-    private String generateSymbolMap() {
+    private String generateCubeCodeSymbolMap() {
         String json = "{\n" +
                 "  \"symbols\": {\n";
 
         Program program = cursorLoc.getProgram();
-        List<String> symbol_strs = new ArrayList<>();
+        List<String> symbolStrs = new ArrayList<>();
         for (Symbol s : program.getSymbolTable().getSymbolIterator()) {
             GameMemoryRegion module = regionIndex.getRegionContainingAddress(cursorLoc.getProgram(), s.getAddress().getOffset());
             if (module != null && (module.regionType == RegionType.HARDWARE || module.name.startsWith("MAIN_"))) {
-                symbol_strs.add(String.format("    \"%s\": { \"module_id\": 0, \"section_id\": 0, \"offset\": %d }", s.getName(), s.getAddress().getOffset()));
+                symbolStrs.add(String.format("    \"%s\": { \"module_id\": 0, \"section_id\": 0, \"offset\": %d }", s.getName(), s.getAddress().getOffset()));
             }
         }
         
         return json +
-                String.join(",\n", symbol_strs) + "\n" +
+                String.join(",\n", symbolStrs) + "\n" +
                 "  }\n" +
                 "}\n";
+    }
+
+    private String generateApeSphereSymbolMap() {
+        Program program = cursorLoc.getProgram();
+        List<String> symbolStrs = new ArrayList<>();
+        for (Symbol s : program.getSymbolTable().getSymbolIterator()) {
+            symbolStrs.add(String.format("%08X:%s", regionIndex.addressToRam(program, s.getAddress()), s.getName()));
+        }
+        return String.join("\n", symbolStrs);
+    }
+
+    private void saveSymbolMap(String type, String contents) {
+        JFileChooser dialog = new JFileChooser();
+        dialog.setSelectedFile(lastSymbolExportFile);
+        dialog.setDialogTitle("Specify where to save " + type + " symbol map");
+        int result = dialog.showSaveDialog(null);
+
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File fileToSave = dialog.getSelectedFile();
+            lastSymbolExportFile = fileToSave;
+
+            try (PrintWriter writer = new PrintWriter(fileToSave)) {
+                writer.print(contents);
+            } catch (FileNotFoundException e) {
+                Msg.error(getClass(), e);
+            }
+
+            Msg.info(getClass(), "Exported " + type + " symbol map for program " + cursorLoc.getProgram().getName());
+        }
     }
 
     @Override
