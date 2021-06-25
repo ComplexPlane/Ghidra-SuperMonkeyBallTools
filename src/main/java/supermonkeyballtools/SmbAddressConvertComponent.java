@@ -23,11 +23,20 @@ import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramContentHandler;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.Listing;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.ProgramUserData;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolType;
+import ghidra.program.model.util.PropertyMap;
+import ghidra.program.model.util.StringPropertyMap;
 import ghidra.program.util.ProgramLocation;
+import ghidra.util.ConsoleErrorDisplay;
 import ghidra.util.Msg;
+import ghidra.util.Saveable;
 import ghidra.util.SystemUtilities;
 
 public class SmbAddressConvertComponent extends ComponentProvider {
@@ -111,6 +120,18 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         exportApeSphereMapAction.setEnabled(true);
         exportApeSphereMapAction.markHelpUnnecessary();
         dockingTool.addLocalAction(this, exportApeSphereMapAction);
+
+        // Export ApeSphere-style symbol map
+        DockingAction exportDmeAction = new DockingAction("Export Dolphin Memory Engine watch list", getName()) {
+            @Override
+            public void actionPerformed(ActionContext context) {
+                saveSymbolMap("DME Watch List", generateDmeWatchList());
+            }
+        };
+        exportDmeAction.setToolBarData(new ToolBarData(ProgramContentHandler.PROGRAM_ICON, null));
+        exportDmeAction.setEnabled(true);
+        exportDmeAction.markHelpUnnecessary();
+        dockingTool.addLocalAction(this, exportDmeAction);
     }
 
     private void updateLocations() {
@@ -179,6 +200,23 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         return String.join("\n", symbolStrs);
     }
 
+    private String generateDmeWatchList() {
+        rememberFilePath("idk", new File("asdfasdf"));
+        Program program = cursorLoc.getProgram();
+        Listing listing = program.getListing();
+        List<String> lines = new ArrayList<>();
+        for (Symbol s : program.getSymbolTable().getSymbolIterator()) {
+            if (!s.getSymbolType().equals(SymbolType.LABEL)) continue;
+
+            Data data = listing.getDataAt(s.getAddress());
+            if (data == null) continue;
+
+            DataType t = data.getDataType();
+            lines.add(String.format("name: %s, type: %s", s.getName(), t.getName()));
+        }
+        return String.join("\n", lines);
+    }
+
     private void saveSymbolMap(String type, String contents) {
         JFileChooser dialog = new JFileChooser();
         dialog.setSelectedFile(lastSymbolExportFile);
@@ -196,6 +234,27 @@ public class SmbAddressConvertComponent extends ComponentProvider {
             }
 
             Msg.info(getClass(), "Exported " + type + " symbol map for program " + cursorLoc.getProgram().getName());
+        }
+    }
+
+    private void rememberFilePath(String name, File path) {
+        ProgramUserData pud = cursorLoc.getProgram().getProgramUserData();
+        int tid = pud.startTransaction();
+        try {
+            StringPropertyMap smap = pud.getStringProperty("SMB Export Paths", "ApeSphere File", true);
+//            smap.add(cursorLoc.getProgram().getMinAddress(), "test");
+            String something = smap.getString(cursorLoc.getProgram().getMinAddress());
+            Msg.showInfo(getClass(), null, "Message For YOU", something);
+
+            StringPropertyMap smap2 = pud.getStringProperty("SMB Export Paths", "What", true);
+            String something2 = smap2.getString(cursorLoc.getProgram().getMinAddress());
+            if (something2 == null) {
+                Msg.showInfo(getClass(), null, "Message For YOU 2", "null");
+            } else if (something.equals("")){
+                Msg.showInfo(getClass(), null, "Message For YOU 2", "empty string");
+            }
+        } finally {
+            pud.endTransaction(tid);
         }
     }
 
