@@ -46,9 +46,8 @@ public class DmeWatchList {
         if (type instanceof TypeDef) {
             type = ((TypeDef) type).getBaseDataType();
         }
-        if (type instanceof AbstractIntegerDataType) {
-            AbstractIntegerDataType intType = (AbstractIntegerDataType) type;
 
+        if (type instanceof AbstractIntegerDataType || type instanceof Undefined) {
             TypeIndex ti;
             if (type.getLength() == 1) {
                 ti = TypeIndex.BYTE;
@@ -59,13 +58,17 @@ public class DmeWatchList {
             } else {
                 return; // Don't support an integer of this unknown size
             }
+            boolean signed = true;
+            if (type instanceof AbstractIntegerDataType) {
+                signed = ((AbstractIntegerDataType) type).isSigned();
+            }
 
             outLines.add("{");
             outLines.add(String.format("\"address\": \"%s\",", addr.toString()));
             outLines.add("\"baseIndex\": 0,");
             outLines.add(String.format("\"label\": \"%s\",", name));
             outLines.add(String.format("\"typeIndex\": %d,", ti.ordinal()));
-            outLines.add(String.format("\"unsigned\": %b", intType.isSigned()));
+            outLines.add(String.format("\"unsigned\": %b", signed));
             outLines.add("},");
 
         } else if (type instanceof Structure) {
