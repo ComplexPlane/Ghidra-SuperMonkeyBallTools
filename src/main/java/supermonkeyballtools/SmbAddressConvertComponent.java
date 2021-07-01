@@ -116,11 +116,12 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         exportApeSphereMapAction.markHelpUnnecessary();
         dockingTool.addLocalAction(this, exportApeSphereMapAction);
 
-        // Export ApeSphere-style symbol map
+        // Export DME watchlist
         DockingAction exportDmeAction = new DockingAction("Export Dolphin Memory Engine watch list", getName()) {
             @Override
             public void actionPerformed(ActionContext context) {
-                saveFile("DME watch list", "smb2_watchlist.dmw", generateDmeWatchList());
+                saveFile("DME watch list", "smb2_watchlist.dmw",
+                        DmeWatchList.genDmeWatchList(cursorLoc.getProgram()));
             }
         };
         exportDmeAction.setToolBarData(new ToolBarData(ProgramContentHandler.PROGRAM_ICON, null));
@@ -195,22 +196,6 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         return String.join("\n", symbolStrs);
     }
 
-    private String generateDmeWatchList() {
-        Program program = cursorLoc.getProgram();
-        Listing listing = program.getListing();
-        List<String> lines = new ArrayList<>();
-        for (Symbol s : program.getSymbolTable().getSymbolIterator()) {
-            if (!s.getSymbolType().equals(SymbolType.LABEL)) continue;
-
-            Data data = listing.getDataAt(s.getAddress());
-            if (data == null) continue;
-
-            DataType t = data.getDataType();
-            lines.add(String.format("name: %s, type: %s", s.getName(), t.getName()));
-        }
-        return String.join("\n", lines);
-    }
-
     private void saveFile(String type, String defaultFilename, String contents) {
         ProgramUserData pud = cursorLoc.getProgram().getProgramUserData();
         int tid = pud.startTransaction();
@@ -224,7 +209,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
 
             JFileChooser dialog = new JFileChooser();
             dialog.setSelectedFile(new File(exportPath));
-            dialog.setDialogTitle("Specify where to save " + type + " symbol map");
+            dialog.setDialogTitle("Specify where to save " + type);
 
             int result = dialog.showSaveDialog(null);
             if (result == JFileChooser.APPROVE_OPTION) {
