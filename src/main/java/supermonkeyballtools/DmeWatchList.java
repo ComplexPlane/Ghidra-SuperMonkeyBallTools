@@ -14,6 +14,13 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+/*
+TODO
+Fix outputting hardware-range addresses
+Convert addresses to actual GC REL addresses
+Output floats/doubles, arrays, strings
+ */
+
 public class DmeWatchList {
 
     private static class WatchList {
@@ -49,11 +56,6 @@ public class DmeWatchList {
             this.groupName = groupName;
         }
     }
-
-    /*
-    TODO
-    Convert addresses to actual GC REL addresses
-     */
 
     private enum TypeIndex {
         BYTE, SHORT, WORD, FLOAT,
@@ -106,12 +108,16 @@ public class DmeWatchList {
     public static String genDmeWatchList(Program program) {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
-
         List<Object> watchList = new ArrayList<>();
 
         SymbolTable table = program.getSymbolTable();
+        Address hardwareRegion = program.getMinAddress().getNewAddress(0xCC000000);
+
         for (Iterator<Symbol> it = table.getSymbolIterator(); it.hasNext(); ) {
             Symbol s = it.next();
+
+            // If address is a hardware register region and not a memory region, ignore it
+            if (s.getAddress().compareTo(hardwareRegion) >= 0) continue;
 
             if (!s.getSymbolType().equals(SymbolType.LABEL)) continue;
             Data data = program.getListing().getDataAt(s.getAddress());
