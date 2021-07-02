@@ -14,12 +14,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-/*
-TODO
-Output floats/doubles, arrays, strings
- */
-
 public class DmeExport {
+
+    private final int ARRAY_LEN_LIMIT = 1;
 
     private Program program;
     private GameModuleIndex regionIndex;
@@ -73,9 +70,30 @@ public class DmeExport {
         for (int i = 0; i < structType.getNumComponents(); i++) {
             DataTypeComponent compon = structType.getComponent(i);
             Address fieldAddr = addr.add(compon.getOffset());
-            Object fieldWatch = genDataType(compon.getFieldName(), compon.getDataType(), fieldAddr);
+            String fieldName = compon.getFieldName();
+            if (fieldName == null) {
+                fieldName = String.format("field_0x%08X", compon.getOffset());
+            }
+            Object fieldWatch = genDataType(fieldName, compon.getDataType(), fieldAddr);
             if (fieldWatch != null) {
                 groupEntries.add(fieldWatch);
+            }
+        }
+
+        return new GroupWatch(groupEntries, name);
+    }
+
+    private GroupWatch genArray(String name, Array arrayType, Address addr) {
+        List<Object> groupEntries = new ArrayList<>();
+
+        int numElems = Math.min(arrayType.getNumElements(), ARRAY_LEN_LIMIT);
+        for (int i = 0; i < numElems; i++) {
+            String elemLabel = String.format("%s[%d]", name, i);
+            Address elemAddr = addr.add((long) i * arrayType.getElementLength());
+            DataType innerType = arrayType.getDataType();
+            Object elemWatch = genDataType(elemLabel, innerType, elemAddr);
+            if (elemWatch != null) {
+                groupEntries.add(elemWatch);
             }
         }
 
@@ -115,6 +133,9 @@ public class DmeExport {
         }
         if (type instanceof Structure) {
             return genStruct(name, (Structure) type, addr);
+        }
+        if (type instanceof Array) {
+            return genArray(name, (Array) type, addr);
         }
         return null;
     }
