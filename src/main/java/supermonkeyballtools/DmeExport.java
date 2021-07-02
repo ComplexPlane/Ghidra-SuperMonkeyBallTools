@@ -16,12 +16,19 @@ import java.util.List;
 
 /*
 TODO
-Fix outputting hardware-range addresses
 Convert addresses to actual GC REL addresses
 Output floats/doubles, arrays, strings
  */
 
-public class DmeWatchList {
+public class DmeExport {
+
+    private Program program;
+    private GameModuleIndex regionIndex;
+
+    public DmeExport(Program program, GameModuleIndex regionIndex) {
+        this.program = program;
+        this.regionIndex = regionIndex;
+    }
 
     private static class WatchList {
         private List<Object> watchList;
@@ -61,7 +68,7 @@ public class DmeWatchList {
         BYTE, SHORT, WORD, FLOAT,
     }
 
-    private static GroupWatch genStruct(String name, Structure structType, Address addr) {
+    private GroupWatch genStruct(String name, Structure structType, Address addr) {
         List<Object> groupEntries = new ArrayList<>();
 
         for (int i = 0; i < structType.getNumComponents(); i++) {
@@ -76,7 +83,7 @@ public class DmeWatchList {
         return new GroupWatch(groupEntries, name);
     }
 
-    private static Object genDataType(String name, DataType type, Address addr) {
+    private Object genDataType(String name, DataType type, Address addr) {
         if (type instanceof TypeDef) {
             type = ((TypeDef) type).getBaseDataType();
         }
@@ -97,7 +104,9 @@ public class DmeWatchList {
                 signed = ((AbstractIntegerDataType) type).isSigned();
             }
 
-            return new VarWatch(addr.toString(), 0, name, ti.ordinal(), !signed);
+            long convertedAddr = regionIndex.addressToRam(program, addr);
+            String addrStr = String.format("%08X", convertedAddr);
+            return new VarWatch(addrStr, 0, name, ti.ordinal(), !signed);
         }
         if (type instanceof Structure) {
             return genStruct(name, (Structure) type, addr);
@@ -105,7 +114,7 @@ public class DmeWatchList {
         return null;
     }
 
-    public static String genDmeWatchList(Program program) {
+    public String genDmeWatchList() {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
         List<Object> watchList = new ArrayList<>();

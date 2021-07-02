@@ -17,20 +17,17 @@ import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
+import ghidra.app.script.GhidraScript;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.dialog.AskAddrDialog;
 import ghidra.framework.plugintool.Plugin;
-import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramContentHandler;
+import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.Listing;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ProgramUserData;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolType;
 import ghidra.program.model.util.StringPropertyMap;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
@@ -41,8 +38,8 @@ public class SmbAddressConvertComponent extends ComponentProvider {
     private JTextArea textArea;
 
     private ProgramLocation cursorLoc;
-
     private GameModuleIndex regionIndex;
+    private DmeExport dmeExport;
 
     public SmbAddressConvertComponent(Plugin plugin, String owner, GameModuleIndex regionIndex) {
         super(plugin.getTool(), "SMB: Convert Address", owner);
@@ -121,7 +118,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
             @Override
             public void actionPerformed(ActionContext context) {
                 saveFile("DME watch list", "smb2_watchlist.dmw",
-                        DmeWatchList.genDmeWatchList(cursorLoc.getProgram()));
+                        dmeExport.genDmeWatchList());
             }
         };
         exportDmeAction.setToolBarData(new ToolBarData(ProgramContentHandler.PROGRAM_ICON, null));
@@ -239,6 +236,12 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         if (loc == null) return;
 
         cursorLoc = loc;
+
+        // Can only initialize exporter once we know the Program in question
+        if (dmeExport == null) {
+            dmeExport = new DmeExport(cursorLoc.getProgram(), regionIndex);
+        }
+
         updateLocations();
     }
 }
