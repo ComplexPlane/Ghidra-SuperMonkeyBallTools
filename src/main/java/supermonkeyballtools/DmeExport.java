@@ -16,7 +16,6 @@ import java.util.List;
 
 /*
 TODO
-Convert addresses to actual GC REL addresses
 Output floats/doubles, arrays, strings
  */
 
@@ -65,7 +64,7 @@ public class DmeExport {
     }
 
     private enum TypeIndex {
-        BYTE, SHORT, WORD, FLOAT,
+        BYTE, SHORT, WORD, FLOAT, DOUBLE,
     }
 
     private GroupWatch genStruct(String name, Structure structType, Address addr) {
@@ -88,9 +87,15 @@ public class DmeExport {
             type = ((TypeDef) type).getBaseDataType();
         }
 
-        if (type instanceof AbstractIntegerDataType || type instanceof Undefined) {
+        if (type instanceof AbstractIntegerDataType
+                || type instanceof Undefined
+                || type instanceof AbstractFloatDataType) {
             TypeIndex ti;
-            if (type.getLength() == 1) {
+            if (type instanceof FloatDataType) {
+                ti = TypeIndex.FLOAT;
+            } else if (type instanceof DoubleDataType) {
+                ti = TypeIndex.DOUBLE;
+            } else if (type.getLength() == 1) {
                 ti = TypeIndex.BYTE;
             } else if (type.getLength() == 2) {
                 ti = TypeIndex.SHORT;
