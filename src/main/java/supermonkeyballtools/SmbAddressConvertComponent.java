@@ -17,6 +17,8 @@ import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
+import ghidra.app.plugin.core.compositeeditor.DuplicateMultipleAction;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.dialog.AskAddrDialog;
@@ -40,6 +42,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
     private ProgramLocation cursorLoc;
     private GameModuleIndex regionIndex;
     private DmeExport dmeExport;
+    private CppExport cppExport;
 
     public SmbAddressConvertComponent(Plugin plugin, String owner, GameModuleIndex regionIndex) {
         super(plugin.getTool(), "SMB: Convert Address", owner);
@@ -125,6 +128,20 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         exportDmeAction.setEnabled(true);
         exportDmeAction.markHelpUnnecessary();
         dockingTool.addLocalAction(this, exportDmeAction);
+
+        // Export C++ header, intended for ApeSphere
+        // TODO do this at the same time as exporting ApeSphere symbol list
+        DockingAction exportCppHeaderAction = new DockingAction("Export C++ header", getName()) {
+            @Override
+            public void actionPerformed(ActionContext context) {
+                saveFile("C++ header", "mkb2_ghidra.h",
+                        cppExport.genCppHeader());
+            }
+        };
+        exportCppHeaderAction.setToolBarData(new ToolBarData(DebuggerResources.ICON_CONSOLE, null));
+        exportCppHeaderAction.setEnabled(true);
+        exportCppHeaderAction.markHelpUnnecessary();
+        dockingTool.addLocalAction(this, exportCppHeaderAction);
     }
 
     private void updateLocations() {
@@ -240,6 +257,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         // Can only initialize exporter once we know the Program in question
         if (dmeExport == null) {
             dmeExport = new DmeExport(cursorLoc.getProgram(), regionIndex);
+            cppExport = new CppExport(cursorLoc.getProgram());
         }
 
         updateLocations();
