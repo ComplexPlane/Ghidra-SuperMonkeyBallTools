@@ -2,7 +2,6 @@ package supermonkeyballtools;
 
 /*
 Ideas:
-- Deal with void-returning functions actually returning undefined
 - Don't export separate fields for unknown fields in structs (export single array)
 - Sort enums
 - Get rid of stupid P pointer types
@@ -16,7 +15,6 @@ import ghidra.program.model.listing.FunctionIterator;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolType;
-import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 

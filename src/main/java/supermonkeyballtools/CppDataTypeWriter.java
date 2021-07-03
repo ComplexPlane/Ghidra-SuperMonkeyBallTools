@@ -22,17 +22,17 @@ import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * A class used to convert data types into ANSI-C.
- *
+ * <p>
  * The ANSI-C code should compile on most platforms.
  */
 public class CppDataTypeWriter {
 
     // list of Ghidra built-in type names which correspond to C primitive types
-    private static String[] INTEGRAL_TYPES = { "char", "short", "int", "long", "long long",
-            "__int64", "float", "double", "long double", "void" };
+    private static String[] INTEGRAL_TYPES = {"char", "short", "int", "long", "long long",
+            "__int64", "float", "double", "long double", "void"};
 
     private static String[] INTEGRAL_MODIFIERS =
-            { "signed", "unsigned", "const", "static", "volatile", "mutable", };
+            {"signed", "unsigned", "const", "static", "volatile", "mutable",};
 
     private static String EOL = System.getProperty("line.separator");
 
@@ -51,8 +51,9 @@ public class CppDataTypeWriter {
     /**
      * Constructs a new instance of this class using the
      * given writer. The default annotation handler is used.
-     * @param dtm data-type manager corresponding to target program or null
-     * for default
+     *
+     * @param dtm    data-type manager corresponding to target program or null
+     *               for default
      * @param writer the writer to use when writing data types
      * @throws IOException
      */
@@ -63,9 +64,10 @@ public class CppDataTypeWriter {
     /**
      * Constructs a new instance of this class using the
      * given writer. The default annotation handler is used.
-     * @param dtm data-type manager corresponding to target program or null
-     * for default
-     * @param writer the writer to use when writing data types
+     *
+     * @param dtm              data-type manager corresponding to target program or null
+     *                         for default
+     * @param writer           the writer to use when writing data types
      * @param cppStyleComments whether to use C++ style comments
      * @throws IOException
      */
@@ -77,9 +79,10 @@ public class CppDataTypeWriter {
     /**
      * Constructs a new instance of this class using the
      * given writer and annotation handler
-     * @param dtm data-type manager corresponding to target program or null
-     * for default
-     * @param writer the writer to use when writing data types
+     *
+     * @param dtm       data-type manager corresponding to target program or null
+     *                  for default
+     * @param writer    the writer to use when writing data types
      * @param annotator the annotation handler to use to annotate the data types
      * @throws IOException
      */
@@ -91,15 +94,16 @@ public class CppDataTypeWriter {
     /**
      * Constructs a new instance of this class using the
      * given writer and annotation handler
-     * @param dtm data-type manager corresponding to target program or null
-     * for default
-     * @param writer the writer to use when writing data types
-     * @param annotator the annotation handler to use to annotate the data types
+     *
+     * @param dtm              data-type manager corresponding to target program or null
+     *                         for default
+     * @param writer           the writer to use when writing data types
+     * @param annotator        the annotation handler to use to annotate the data types
      * @param cppStyleComments whether to use C++ style comments
      * @throws IOException
      */
     public CppDataTypeWriter(DataTypeManager dtm, Writer writer, AnnotationHandler annotator,
-                          boolean cppStyleComments) throws IOException {
+                             boolean cppStyleComments) throws IOException {
         this.dtm = dtm;
         if (dtm != null) {
             dataOrganization = dtm.getDataOrganization();
@@ -127,9 +131,10 @@ public class CppDataTypeWriter {
 
     /**
      * Converts all data types in the data type manager into ANSI-C code.
+     *
      * @param dataTypeManager the manager containing the data types to write
-     * @param monitor the task monitor
-     * @throws IOException if an I/O error occurs when writing the data types to the specified writer
+     * @param monitor         the task monitor
+     * @throws IOException        if an I/O error occurs when writing the data types to the specified writer
      * @throws CancelledException
      */
     public void write(DataTypeManager dataTypeManager, TaskMonitor monitor)
@@ -139,9 +144,10 @@ public class CppDataTypeWriter {
 
     /**
      * Converts all data types in the category into ANSI-C code.
+     *
      * @param category the category containing the datatypes to write
-     * @param monitor the task monitor
-     * @throws IOException if an I/O error occurs when writing the data types to the specified writer
+     * @param monitor  the task monitor
+     * @throws IOException        if an I/O error occurs when writing the data types to the specified writer
      * @throws CancelledException
      */
     public void write(Category category, TaskMonitor monitor)
@@ -160,9 +166,10 @@ public class CppDataTypeWriter {
 
     /**
      * Converts all data types in the array into ANSI-C code.
+     *
      * @param dataTypes the data types to write
-     * @param monitor the task monitor
-     * @throws IOException if an I/O error occurs when writing the data types to the specified writer
+     * @param monitor   the task monitor
+     * @throws IOException        if an I/O error occurs when writing the data types to the specified writer
      * @throws CancelledException
      */
     public void write(DataType[] dataTypes, TaskMonitor monitor)
@@ -178,9 +185,10 @@ public class CppDataTypeWriter {
 
     /**
      * Converts all data types in the list into ANSI-C code.
+     *
      * @param dataTypes the data types to write
-     * @param monitor the task monitor
-     * @throws IOException if an I/O error occurs when writing the data types to the specified writer
+     * @param monitor   the task monitor
+     * @throws IOException        if an I/O error occurs when writing the data types to the specified writer
      * @throws CancelledException
      */
     public void write(List<DataType> dataTypes, TaskMonitor monitor)
@@ -217,7 +225,8 @@ public class CppDataTypeWriter {
 
     /**
      * Writes the data type as ANSI-C using the underlying writer.
-     * @param dt the data type to write as ANSI-C
+     *
+     * @param dt      the data type to write as ANSI-C
      * @param monitor
      * @throws IOException
      */
@@ -280,33 +289,25 @@ public class CppDataTypeWriter {
             writer.write("typedef unsigned char   " + DataType.DEFAULT.getName() + ";");
             writer.write(EOL);
             writer.write(EOL);
-        }
-        else if (dt instanceof Dynamic) {
+        } else if (dt instanceof Dynamic) {
             writeDynamicBuiltIn((Dynamic) dt, monitor);
-        }
-        else if (dt instanceof Structure) {
+        } else if (dt instanceof Structure) {
             Structure struct = (Structure) dt;
             writeCompositePreDeclaration(struct, monitor);
             deferredCompositeDeclarations.add(struct);
-        }
-        else if (dt instanceof Union) {
+        } else if (dt instanceof Union) {
             Union union = (Union) dt;
             writeCompositePreDeclaration(union, monitor);
             deferredCompositeDeclarations.add(union);
-        }
-        else if (dt instanceof ghidra.program.model.data.Enum) {
+        } else if (dt instanceof ghidra.program.model.data.Enum) {
             writeEnum((ghidra.program.model.data.Enum) dt, monitor);
-        }
-        else if (dt instanceof TypeDef) {
+        } else if (dt instanceof TypeDef) {
             writeTypeDef((TypeDef) dt, monitor);
-        }
-        else if (dt instanceof BuiltInDataType) {
+        } else if (dt instanceof BuiltInDataType) {
             writeBuiltIn((BuiltInDataType) dt, monitor);
-        }
-        else if (dt instanceof BitFieldDataType) {
+        } else if (dt instanceof BitFieldDataType) {
             // skip
-        }
-        else {
+        } else {
             writer.write(EOL);
             writer.write(EOL);
             writer.write(comment("Unable to write datatype. Type unrecognized: " + dt.getClass()));
@@ -335,11 +336,9 @@ public class CppDataTypeWriter {
         while (dt != null) {
             if (dt instanceof TypeDef) {
                 dt = ((TypeDef) dt).getBaseDataType();
-            }
-            else if (dt instanceof Array) {
+            } else if (dt instanceof Array) {
                 dt = ((Array) dt).getDataType();
-            }
-            else {
+            } else {
                 break;
             }
         }
@@ -412,8 +411,7 @@ public class CppDataTypeWriter {
                             dynamicType.getClass().getSimpleName() +
                                     " returned bad replacementBaseType: " +
                                     replacementBaseType.getClass().getSimpleName());
-                }
-                else {
+                } else {
                     int elementCnt = (length + elementLen - 1) / elementLen;
                     return replacementBaseType.getDisplayName() + " " + fieldName + "[" +
                             elementCnt + "]";
@@ -469,21 +467,25 @@ public class CppDataTypeWriter {
         }
         sb.append(EOL);
 
-        for (DataTypeComponent component : composite.getComponents()) {
+        DataTypeComponent[] components = composite.getComponents();
+        for (int i = 0; i < components.length; i++) {
             monitor.checkCanceled();
-            writeComponent(component, composite, sb, monitor);
+            DataTypeComponent curr = components[i];
+            DataTypeComponent next = i < components.length - 1 ? components[i + 1] : null;
+            writeComponent(curr, next, composite, sb, monitor);
         }
 
         if (composite instanceof Structure) {
             Structure s = (Structure) composite;
             if (s.hasFlexibleArrayComponent()) {
-                writeComponent(s.getFlexibleArrayComponent(), composite, sb, monitor);
+                writeComponent(s.getFlexibleArrayComponent(), null, composite, sb, monitor);
             }
         }
 
         sb.append(annotator.getSuffix(composite, null));
-        sb.append("};");
+        sb.append("} __attribute__((__packed__));");
         sb.append(EOL);
+
         sb.append(String.format("static_assert(sizeof(%s) == 0x%X);",
                 composite.getDisplayName(), composite.getLength()));
 
@@ -492,33 +494,51 @@ public class CppDataTypeWriter {
         writer.write(EOL);
     }
 
-    private void writeComponent(DataTypeComponent component, Composite composite, StringBuffer sb,
-                                TaskMonitor monitor) throws IOException, CancelledException {
+    private void writeComponent(DataTypeComponent currComponent, DataTypeComponent nextComponent,
+                                Composite composite, StringBuffer sb, TaskMonitor monitor)
+            throws IOException, CancelledException {
         sb.append("    ");
-        sb.append(annotator.getPrefix(composite, component));
+        sb.append(annotator.getPrefix(composite, currComponent));
 
-        String fieldName = component.getFieldName();
+        String fieldName = currComponent.getFieldName();
         if (fieldName == null || fieldName.length() == 0) {
-            fieldName = component.getDefaultFieldName();
+            fieldName = currComponent.getDefaultFieldName();
         }
 
-        DataType componentDataType = component.getDataType();
+        DataType componentDataType = currComponent.getDataType();
 
-        sb.append(getTypeDeclaration(fieldName, componentDataType, component.getLength(),
-                component.isFlexibleArrayComponent(), false, monitor));
+        sb.append(getTypeDeclaration(fieldName, componentDataType, currComponent.getLength(),
+                currComponent.isFlexibleArrayComponent(), false, monitor));
 
         sb.append(";");
-        sb.append(annotator.getSuffix(composite, component));
+        sb.append(annotator.getSuffix(composite, currComponent));
 
-        String comment = component.getComment();
+        String comment = currComponent.getComment();
         if (comment != null && comment.length() > 0) {
             sb.append(" " + comment(comment));
         }
+
+        // Manually add padding so packed structs have correct size
+        int padLength = 0;
+        if (nextComponent != null) {
+            padLength = (nextComponent.getOffset() - currComponent.getOffset()) - currComponent.getLength();
+        } else if (!currComponent.isFlexibleArrayComponent()) {
+            int finalOffset = currComponent.getOffset() + currComponent.getLength();
+            int alignment = composite.getAlignment();
+            if (finalOffset % alignment != 0) {
+                padLength = alignment - (finalOffset % alignment);
+            }
+        }
+        if (padLength > 0) {
+            sb.append(String.format("%s    undefined padding_0x%X[%d];",
+                    EOL, currComponent.getOffset() + currComponent.getLength(), padLength));
+        }
+
         sb.append(EOL);
     }
 
     public String getTypeDeclaration(String name, DataType dataType, int instanceLength,
-                                      boolean isFlexArray, boolean writeEnabled, TaskMonitor monitor)
+                                     boolean isFlexArray, boolean writeEnabled, TaskMonitor monitor)
             throws IOException, CancelledException {
 
         if (name == null) {
@@ -531,8 +551,7 @@ public class CppDataTypeWriter {
             componentString = getDynamicComponentString((Dynamic) dataType, name, instanceLength);
             if (componentString != null) {
                 sb.append(componentString);
-            }
-            else {
+            } else {
                 sb.append(comment(
                         "ignoring dynamic datatype inside composite: " + dataType.getDisplayName()));
                 sb.append(EOL);
@@ -545,8 +564,7 @@ public class CppDataTypeWriter {
                 BitFieldDataType bfDt = (BitFieldDataType) dataType;
                 name += ":" + bfDt.getDeclaredBitSize();
                 dataType = bfDt.getBaseDataType();
-            }
-            else if (dataType instanceof Array) {
+            } else if (dataType instanceof Array) {
                 Array array = (Array) dataType;
                 name += getArrayDimensions(array);
                 dataType = getArrayBaseType(array);
@@ -556,8 +574,7 @@ public class CppDataTypeWriter {
             if (baseDataType instanceof FunctionDefinition) {
                 componentString = getFunctionPointerString((FunctionDefinition) baseDataType, name,
                         dataType, writeEnabled, monitor);
-            }
-            else {
+            } else {
                 componentString = getDataTypePrefix(dataType) + dataType.getDisplayName();
                 if (isFlexArray) {
                     componentString += "[0]";
@@ -575,11 +592,9 @@ public class CppDataTypeWriter {
         dataType = getBaseDataType(dataType);
         if (dataType instanceof Structure) {
             return "struct ";
-        }
-        else if (dataType instanceof Union) {
+        } else if (dataType instanceof Union) {
             return "union ";
-        }
-        else if (dataType instanceof ghidra.program.model.data.Enum) {
+        } else if (dataType instanceof ghidra.program.model.data.Enum) {
             return "enum ";
         }
         return "";
@@ -629,6 +644,7 @@ public class CppDataTypeWriter {
 
     /**
      * Typedef Format: typedef <TYPE_DEF_NAME> <BASE_TYPE_NAME>
+     *
      * @throws CancelledException
      */
     private void writeTypeDef(TypeDef typeDef, TaskMonitor monitor)
@@ -661,8 +677,7 @@ public class CppDataTypeWriter {
                     return;
                 }
             }
-        }
-        finally {
+        } finally {
             write(dataType, monitor);
         }
 
@@ -719,6 +734,9 @@ public class CppDataTypeWriter {
     }
 
     private void writeBuiltIn(BuiltInDataType dt, TaskMonitor monitor) throws IOException {
+        // Assume we're working with C++ and bool is already defined
+        if (dt.isEquivalent(BooleanDataType.dataType)) return;
+
         String declaration = dt.getCTypeDeclaration(dataOrganization);
         if (declaration != null) {
             writer.write(declaration);
@@ -730,7 +748,8 @@ public class CppDataTypeWriter {
      * Write all built-in data types declarations into ANSI-C code.
      * Those types whose name matches the corresponding primitive C-type.
      * are not included.
-     * @throws IOException if an I/O error occurs when writing the data types to the specified writer
+     *
+     * @throws IOException        if an I/O error occurs when writing the data types to the specified writer
      * @throws CancelledException
      */
     private void writeBuiltInDeclarations(DataTypeManager manager) throws IOException {
@@ -751,8 +770,7 @@ public class CppDataTypeWriter {
                 }
                 write(dt, TaskMonitorAdapter.DUMMY_MONITOR);
             }
-        }
-        catch (CancelledException e) {
+        } catch (CancelledException e) {
             // ignore - should never occur with dummy monitor
         }
 
@@ -773,16 +791,13 @@ public class CppDataTypeWriter {
             if (dt instanceof Array) {
                 Array array = (Array) dt;
                 dt = array.getDataType();
-            }
-            else if (dt instanceof Pointer) {
+            } else if (dt instanceof Pointer) {
                 Pointer pointer = (Pointer) dt;
                 dt = pointer.getDataType();
-            }
-            else if (dt instanceof BitFieldDataType) {
+            } else if (dt instanceof BitFieldDataType) {
                 BitFieldDataType bitfieldDt = (BitFieldDataType) dt;
                 dt = bitfieldDt.getBaseDataType();
-            }
-            else {
+            } else {
                 break;
             }
         }
