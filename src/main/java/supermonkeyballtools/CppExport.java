@@ -2,6 +2,8 @@ package supermonkeyballtools;
 
 /*
 Ideas:
+- Fix function typedef exporting
+- Fix array function paran exporting
 - Don't export separate fields for unknown fields in structs (export single array)
 - Sort enums
 - Get rid of stupid P pointer types
@@ -34,7 +36,7 @@ public class CppExport {
     }
 
     private void genExternDecls(CppDataTypeWriter typeWriter, Writer out) throws CancelledException, IOException {
-        out.write("typedef void *pointer");
+        out.write("typedef void *pointer;" + EOL + EOL);
 
         out.write("extern \"C\" {" + EOL);
 
