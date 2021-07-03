@@ -2,21 +2,21 @@ package supermonkeyballtools;
 
 /*
 Ideas:
+- Deal with void-returning functions actually returning undefined
 - Don't export separate fields for unknown fields in structs (export single array)
-- Static assert struct sizes / pack structs?
 - Sort enums
-- Fix undefined/pointer types for extern exporting
 - Get rid of stupid P pointer types
 - Break string concatenation into separate write calls?
  */
 
-import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.FunctionIterator;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolType;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -36,10 +36,12 @@ public class CppExport {
     }
 
     private void genExternDecls(CppDataTypeWriter typeWriter, Writer out) throws CancelledException, IOException {
+        out.write("typedef void *pointer");
+
         out.write("extern \"C\" {" + EOL);
 
         // Write extern global variable decls
-        out.write("/* Global data */" + EOL);
+        out.write("    /* Global data */" + EOL);
         for (Iterator<Symbol> it = program.getSymbolTable().getSymbolIterator(); it.hasNext(); ) {
             Symbol s = it.next();
 
@@ -55,7 +57,7 @@ public class CppExport {
         }
 
         // Write function decls
-        out.write(EOL + "/* Function decls */" + EOL);
+        out.write(EOL + "    /* Function decls */" + EOL);
         FunctionIterator it = program.getFunctionManager().getFunctions(true);
         while (it.hasNext()) {
             Function func = it.next();
@@ -66,6 +68,15 @@ public class CppExport {
             if (!cIdentifierPattern.matcher(name).matches()) continue;
 
             String funcDecl = func.getPrototypeString(true, false);
+            // Functions that haven't received a return type get the DefaultDataType.
+            // It's confusing because the return type in the listing is "undefined"
+            // but in the decompiler it's "void", but it's technically neither.
+            // The user probably just assumes it's void based on the decompile view,
+            // so just treat it as void.
+            if (func.getReturnType().isEquivalent(DefaultDataType.dataType)) {
+                funcDecl = "void " + funcDecl.substring("undefined ".length());
+            }
+
             out.write("    " + funcDecl + ";" + EOL);
         }
 
