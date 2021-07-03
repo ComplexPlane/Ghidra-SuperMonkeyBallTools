@@ -483,6 +483,9 @@ public class CppDataTypeWriter {
 
         sb.append(annotator.getSuffix(composite, null));
         sb.append("};");
+        sb.append(EOL);
+        sb.append(String.format("static_assert(sizeof(%s) == 0x%X);",
+                composite.getDisplayName(), composite.getLength()));
 
         writer.write(sb.toString());
         writer.write(EOL);
@@ -594,7 +597,13 @@ public class CppDataTypeWriter {
             return;
         }
 
-        writer.write("typedef enum " + enumName + " " + "{");
+        String enumSize = null;
+        if (enumm.getLength() == 1) enumSize = "undefined1";
+        else if (enumm.getLength() == 2) enumSize = "undefined2";
+        else if (enumm.getLength() == 4) enumSize = "undefined4";
+        else if (enumm.getLength() == 8) enumSize = "undefined8";
+
+        writer.write("typedef enum " + enumName + " : " + enumSize + " {");
         String descrip = enumm.getDescription();
         if (descrip != null && descrip.length() != 0) {
             writer.write(" " + comment(descrip));

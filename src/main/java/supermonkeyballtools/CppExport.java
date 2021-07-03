@@ -4,9 +4,10 @@ package supermonkeyballtools;
 Ideas:
 - Don't export separate fields for unknown fields in structs (export single array)
 - Static assert struct sizes / pack structs?
-- Export enums as modern C++ fixed-size enums
 - Sort enums
 - Fix undefined/pointer types for extern exporting
+- Get rid of stupid P pointer types
+- Break string concatenation into separate write calls?
  */
 
 import ghidra.program.model.data.DataType;
