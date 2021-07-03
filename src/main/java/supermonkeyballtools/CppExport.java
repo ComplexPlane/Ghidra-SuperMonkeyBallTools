@@ -61,7 +61,8 @@ public class CppExport {
 
             // Only export functions with non-null, valid names
             String name = func.getName();
-            if (name == null || !cIdentifierPattern.matcher(name).matches()) continue;
+            if (name.startsWith("FUN_")) continue;
+            if (!cIdentifierPattern.matcher(name).matches()) continue;
 
             String funcDecl = func.getPrototypeString(true, false);
             out.write("    " + funcDecl + ";" + EOL);
