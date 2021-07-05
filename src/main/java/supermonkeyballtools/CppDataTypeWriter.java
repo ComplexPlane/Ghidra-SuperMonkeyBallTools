@@ -15,6 +15,7 @@ import java.util.*;
 
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
+import ghidra.program.model.listing.Function;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -307,6 +308,8 @@ public class CppDataTypeWriter {
             writeBuiltIn((BuiltInDataType) dt, monitor);
         } else if (dt instanceof BitFieldDataType) {
             // skip
+        } else if (dt instanceof FunctionDefinition) {
+            writeFunctionDefinition((FunctionDefinition) dt, monitor);
         } else {
             writer.write(EOL);
             writer.write(EOL);
@@ -319,6 +322,21 @@ public class CppDataTypeWriter {
             writeDeferredDeclarations(monitor);
         }
         --writerDepth;
+
+        /*
+        For function decls:
+        - Directly write out all dependent types
+            - For struct types, need to write out pre-declaration, keep track of those separately
+            - For function pointer types, use resolvedTypeMap to keep track of when one is already written out
+                - If it has been we don't write it out again. If there's a cyclic dependency, we just output broken typedefs
+                  as it's impossible to compile them anyway
+        - Write out the typedef itself
+            - Separate module for formatting function-like defs?
+         */
+    }
+
+    private void writeFunctionDefinition(FunctionDefinition dt, TaskMonitor monitor) {
+//        writer.write(getFunctionPointerString(dt, ))
     }
 
     private void writeDeferredDeclarations(TaskMonitor monitor)
@@ -829,48 +847,62 @@ public class CppDataTypeWriter {
         return depth;
     }
 
-    private String getFunctionPointerString(FunctionDefinition fd, String name,
-                                            DataType functionPointerArrayType, boolean writeEnabled, TaskMonitor monitor)
+    public String getFunctionPointerString(FunctionDefinition fd, String name,
+                                           DataType functionPointerArrayType, boolean writeEnabled, TaskMonitor monitor)
             throws IOException, CancelledException {
-
-        DataType originalType = functionPointerArrayType;
 
         StringBuilder sb = new StringBuilder();
 
         DataType returnType = fd.getReturnType();
+        // Functions that haven't received a return type get the DefaultDataType.
+        // It's confusing because the return type in the listing is "undefined"
+        // but in the decompiler it's "void", but it's technically neither.
+        // The user probably just assumes it's void based on the decompile view,
+        // so just treat it as void.
+        if (returnType.equals(DataType.DEFAULT)) {
+            returnType = DataType.VOID;
+        }
         if (writeEnabled) {
             write(returnType, monitor);
         }
 
-        sb.append("(");
-        String arrayDecorations = "";
-        if (functionPointerArrayType instanceof Array) {
-            Array a = (Array) functionPointerArrayType;
-            functionPointerArrayType = getArrayBaseType(a);
-            arrayDecorations = getArrayDimensions(a);
-        }
-        if (functionPointerArrayType instanceof Pointer) {
-            Pointer p = (Pointer) functionPointerArrayType;
-            for (int i = 0; i < getPointerDepth(p); i++) {
-                sb.append('*');
+        if (functionPointerArrayType != null) {
+            DataType originalType = functionPointerArrayType;
+
+            sb.append("(");
+            String arrayDecorations = "";
+            if (functionPointerArrayType instanceof Array) {
+                Array a = (Array) functionPointerArrayType;
+                functionPointerArrayType = getArrayBaseType(a);
+                arrayDecorations = getArrayDimensions(a);
+            }
+            if (functionPointerArrayType instanceof Pointer) {
+                Pointer p = (Pointer) functionPointerArrayType;
+                for (int i = 0; i < getPointerDepth(p); i++) {
+                    sb.append('*');
+                }
+                if (name != null) {
+                    sb.append(' ');
+                }
+                functionPointerArrayType = getPointerBaseDataType(p);
+            }
+            if (!(functionPointerArrayType instanceof FunctionDefinition)) {
+                writer.append(
+                        comment("Attempting output of invalid function pointer type declaration: " +
+                                originalType.getDisplayName()));
             }
             if (name != null) {
-                sb.append(' ');
+                sb.append(name);
             }
-            functionPointerArrayType = getPointerBaseDataType(p);
-        }
-        if (!(functionPointerArrayType instanceof FunctionDefinition)) {
-            writer.append(
-                    comment("Attempting output of invalid function pointer type declaration: " +
-                            originalType.getDisplayName()));
-        }
-        if (name != null) {
+            if (arrayDecorations.length() != 0) {
+                sb.append(arrayDecorations);
+            }
+            sb.append(")");
+
+        } else if (name != null) {
             sb.append(name);
         }
-        if (arrayDecorations.length() != 0) {
-            sb.append(arrayDecorations);
-        }
-        sb.append(")");
+
         sb.append(getParameterListString(fd, false, writeEnabled, monitor));
 
         DataType baseReturnType = getBaseDataType(returnType);
@@ -882,8 +914,8 @@ public class CppDataTypeWriter {
         return returnType.getDisplayName() + " " + sb.toString();
     }
 
-    private String getParameterListString(FunctionDefinition fd, boolean includeParamNames,
-                                          boolean writeEnabled, TaskMonitor monitor) throws IOException, CancelledException {
+    public String getParameterListString(FunctionDefinition fd, boolean includeParamNames,
+                                         boolean writeEnabled, TaskMonitor monitor) throws IOException, CancelledException {
         StringBuilder buf = new StringBuilder();
         buf.append("(");
         boolean hasVarArgs = fd.hasVarArgs();

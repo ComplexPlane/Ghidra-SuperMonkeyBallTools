@@ -3,11 +3,17 @@ package supermonkeyballtools;
 /*
 Ideas:
 - Fix function typedef exporting
-- Fix array function paran exporting
+- Fix array function param exporting
 - Don't export separate fields for unknown fields in structs (export single array)
 - Sort enums
 - Get rid of stupid P pointer types
 - Break string concatenation into separate write calls?
+- Progress bar? Dialog window for multiple export?
+
+How to fix function defn. exporting:
+1. Custom getPrototypeString(), similar for function decl and typedef
+2. Function typedefs need to be printed at some point in CppDataTypeWriter
+    Need to figure out how to work with the deferred type printing stuff?
  */
 
 import ghidra.program.model.data.*;
@@ -59,24 +65,17 @@ public class CppExport {
         // Write function decls
         out.write(EOL + "    /* Function decls */" + EOL);
         FunctionIterator it = program.getFunctionManager().getFunctions(true);
+        StringBuilder buf = new StringBuilder();
         while (it.hasNext()) {
             Function func = it.next();
+            FunctionDefinition def = (FunctionDefinition) func.getSignature();
 
             // Only export functions with non-null, valid names
             String name = func.getName();
             if (name.startsWith("FUN_")) continue;
             if (!cIdentifierPattern.matcher(name).matches()) continue;
 
-            String funcDecl = func.getPrototypeString(true, false);
-            // Functions that haven't received a return type get the DefaultDataType.
-            // It's confusing because the return type in the listing is "undefined"
-            // but in the decompiler it's "void", but it's technically neither.
-            // The user probably just assumes it's void based on the decompile view,
-            // so just treat it as void.
-            if (func.getReturnType().isEquivalent(DefaultDataType.dataType)) {
-                funcDecl = "void " + funcDecl.substring("undefined ".length());
-            }
-
+            String funcDecl = typeWriter.getFunctionPointerString(def, func.getName(), null, false, TaskMonitor.DUMMY);
             out.write("    " + funcDecl + ";" + EOL);
         }
 
