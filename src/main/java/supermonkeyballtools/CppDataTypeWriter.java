@@ -459,7 +459,7 @@ public class CppDataTypeWriter {
             deferWrite(componentType);
 
             // TODO the return value of this is not used--delete?
-            getTypeDeclaration(null, componentType, component.getLength(), false, true, monitor);
+            getTypeDeclaration(null, componentType, component.getLength(), false, true, false, monitor);
         }
 
         if (composite instanceof Structure) {
@@ -526,7 +526,7 @@ public class CppDataTypeWriter {
         DataType componentDataType = currComponent.getDataType();
 
         sb.append(getTypeDeclaration(fieldName, componentDataType, currComponent.getLength(),
-                currComponent.isFlexibleArrayComponent(), false, monitor));
+                currComponent.isFlexibleArrayComponent(), false, false, monitor));
 
         sb.append(";");
         sb.append(annotator.getSuffix(composite, currComponent));
@@ -556,7 +556,7 @@ public class CppDataTypeWriter {
     }
 
     public String getTypeDeclaration(String name, DataType dataType, int instanceLength,
-                                     boolean isFlexArray, boolean writeEnabled, TaskMonitor monitor)
+                                     boolean isFlexArray, boolean writeEnabled, boolean decayArrays, TaskMonitor monitor)
             throws IOException, CancelledException {
 
         if (name == null) {
@@ -593,12 +593,18 @@ public class CppDataTypeWriter {
                 componentString = getFunctionPointerString((FunctionDefinition) baseDataType, name,
                         dataType, writeEnabled, monitor);
             } else {
-                componentString = getDataTypePrefix(dataType) + dataType.getDisplayName();
-                if (isFlexArray) {
-                    componentString += "[0]";
-                }
-                if (name.length() != 0) {
-                    componentString += " " + name;
+                // TODO deal with nested array pointer types
+                if (dataType instanceof Pointer && ((Pointer) dataType).getDataType() instanceof Array) {
+                    Array arr = (Array) ((Pointer) dataType).getDataType();
+                    componentString = baseDataType.getDisplayName() + " " + name + getArrayDimensions(arr);
+                } else {
+                    componentString = getDataTypePrefix(dataType) + dataType.getDisplayName();
+                    if (isFlexArray) {
+                        componentString += "[0]";
+                    }
+                    if (name.length() != 0) {
+                        componentString += " " + name;
+                    }
                 }
             }
             sb.append(componentString);
@@ -703,7 +709,7 @@ public class CppDataTypeWriter {
             writeDeferredDeclarations(monitor);
         }
 
-        String typedefString = getTypeDeclaration(typedefName, dataType, -1, false, true, monitor);
+        String typedefString = getTypeDeclaration(typedefName, dataType, -1, false, true, false, monitor);
 
         writer.write("typedef " + typedefString + ";");
         writer.write(EOL);
@@ -903,7 +909,7 @@ public class CppDataTypeWriter {
             sb.append(name);
         }
 
-        sb.append(getParameterListString(fd, false, writeEnabled, monitor));
+        sb.append(getParameterListString(fd, functionPointerArrayType == null, writeEnabled, monitor));
 
         DataType baseReturnType = getBaseDataType(returnType);
         if (baseReturnType instanceof FunctionDefinition) {
@@ -930,7 +936,7 @@ public class CppDataTypeWriter {
                 write(dataType, monitor);
             }
             String argument = getTypeDeclaration(paramName, dataType, param.getLength(), false,
-                    writeEnabled, monitor);
+                    writeEnabled, true, monitor);
 
             buf.append(argument);
 

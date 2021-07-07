@@ -2,18 +2,11 @@ package supermonkeyballtools;
 
 /*
 Ideas:
-- Fix function typedef exporting
-- Fix array function param exporting
 - Don't export separate fields for unknown fields in structs (export single array)
 - Sort enums
 - Get rid of stupid P pointer types
 - Break string concatenation into separate write calls?
 - Progress bar? Dialog window for multiple export?
-
-How to fix function defn. exporting:
-1. Custom getPrototypeString(), similar for function decl and typedef
-2. Function typedefs need to be printed at some point in CppDataTypeWriter
-    Need to figure out how to work with the deferred type printing stuff?
  */
 
 import ghidra.program.model.data.*;
@@ -58,7 +51,7 @@ public class CppExport {
             if (!cIdentifierPattern.matcher(s.getName()).matches()) continue;
 
             String typeDecl = typeWriter.getTypeDeclaration(s.getName(), type, data.getLength(),
-                    false, false, TaskMonitor.DUMMY);
+                    false, false, false, TaskMonitor.DUMMY);
             out.write("    extern " + typeDecl + ";" + EOL);
         }
 
