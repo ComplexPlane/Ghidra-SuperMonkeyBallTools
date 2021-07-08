@@ -1,13 +1,8 @@
 package supermonkeyballtools;
 
 /**
- * Based on Ghidra's DataTypeWriter, but with some modifications for cleaner and more correct output
- * for C++ projects. These include:
- * - Collapse consecutive "field_0x..." undefined fields into a single array
- * - Use C++ fixed-size enums
- * - Sort enums by value, not by name
+ * Based on Ghidra's DataTypeWriter but with numerous correctness, completeness, and aesthetic fixes.
  */
-
 
 import java.io.IOException;
 import java.io.Writer;

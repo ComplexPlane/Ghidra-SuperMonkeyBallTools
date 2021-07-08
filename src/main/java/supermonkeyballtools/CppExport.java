@@ -1,14 +1,5 @@
 package supermonkeyballtools;
 
-/*
-Ideas:
-- Don't export separate fields for unknown fields in structs (export single array)
-- Sort enums
-- Get rid of stupid P pointer types
-- Break string concatenation into separate write calls?
-- Progress bar? Dialog window for multiple export?
- */
-
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Function;
@@ -26,9 +17,9 @@ import java.util.Iterator;
 import java.util.regex.Pattern;
 
 public class CppExport {
-    private Program program;
-    private static String EOL = System.getProperty("line.separator");
-    private static Pattern cIdentifierPattern = Pattern.compile("[a-zA-Z_][a-zA-Z0-9_]*");
+    private final Program program;
+    private static final String EOL = System.getProperty("line.separator");
+    private static final Pattern cIdentifierPattern = Pattern.compile("[a-zA-Z_][a-zA-Z0-9_]*");
 
     public CppExport(Program program) {
         this.program = program;
@@ -50,15 +41,15 @@ public class CppExport {
             DataType type = data.getDataType();
             if (!cIdentifierPattern.matcher(s.getName()).matches()) continue;
 
+            String vol = program.getMemory().getBlock(s.getAddress()).isVolatile() ? "volatile " : "";
             String typeDecl = typeWriter.getTypeDeclaration(s.getName(), type, data.getLength(),
                     false, false, false, TaskMonitor.DUMMY);
-            out.write("    extern " + typeDecl + ";" + EOL);
+            out.write("    extern " + vol + typeDecl + ";" + EOL);
         }
 
         // Write function decls
         out.write(EOL + "    /* Function decls */" + EOL);
         FunctionIterator it = program.getFunctionManager().getFunctions(true);
-        StringBuilder buf = new StringBuilder();
         while (it.hasNext()) {
             Function func = it.next();
             FunctionDefinition def = (FunctionDefinition) func.getSignature();
@@ -78,7 +69,8 @@ public class CppExport {
     public String genCppHeader() {
         // TODO write directly to a file instead of generating an intermediate String first
         StringWriter buf = new StringWriter();
-        CppDataTypeWriter typeWriter = null;
+        buf.write("#pragma once" + EOL + EOL);
+        CppDataTypeWriter typeWriter;
         try {
             typeWriter = new CppDataTypeWriter(program.getDataTypeManager(), buf);
             typeWriter.write(program.getDataTypeManager(), TaskMonitor.DUMMY);
