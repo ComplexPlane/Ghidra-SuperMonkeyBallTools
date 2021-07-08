@@ -704,7 +704,13 @@ public class CppDataTypeWriter {
             writeDeferredDeclarations(monitor);
         }
 
-        String typedefString = getTypeDeclaration(typedefName, dataType, -1, false, true, false, monitor);
+        String typedefString;
+        if (dataType.isEquivalent(CharDataType.dataType)) {
+            // Char signedness is implementation-defined but Ghidra generally assumes it's always signed
+            typedefString = "signed char " + typedefName;
+        } else {
+            typedefString = getTypeDeclaration(typedefName, dataType, -1, false, true, false, monitor);
+        }
 
         writer.write("typedef " + typedefString + ";");
         writer.write(EOL);
