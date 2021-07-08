@@ -10,7 +10,6 @@ import java.util.*;
 
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
-import ghidra.program.model.listing.Function;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -21,7 +20,7 @@ import ghidra.util.task.TaskMonitorAdapter;
  * <p>
  * The ANSI-C code should compile on most platforms.
  */
-public class CppDataTypeWriter {
+public class BetterDataTypeWriter {
 
     // list of Ghidra built-in type names which correspond to C primitive types
     private static String[] INTEGRAL_TYPES = {"char", "short", "int", "long", "long long",
@@ -53,7 +52,7 @@ public class CppDataTypeWriter {
      * @param writer the writer to use when writing data types
      * @throws IOException
      */
-    public CppDataTypeWriter(DataTypeManager dtm, Writer writer) throws IOException {
+    public BetterDataTypeWriter(DataTypeManager dtm, Writer writer) throws IOException {
         this(dtm, writer, new DefaultAnnotationHandler());
     }
 
@@ -67,7 +66,7 @@ public class CppDataTypeWriter {
      * @param cppStyleComments whether to use C++ style comments
      * @throws IOException
      */
-    public CppDataTypeWriter(DataTypeManager dtm, Writer writer, boolean cppStyleComments)
+    public BetterDataTypeWriter(DataTypeManager dtm, Writer writer, boolean cppStyleComments)
             throws IOException {
         this(dtm, writer, new DefaultAnnotationHandler(), cppStyleComments);
     }
@@ -82,7 +81,7 @@ public class CppDataTypeWriter {
      * @param annotator the annotation handler to use to annotate the data types
      * @throws IOException
      */
-    public CppDataTypeWriter(DataTypeManager dtm, Writer writer, AnnotationHandler annotator)
+    public BetterDataTypeWriter(DataTypeManager dtm, Writer writer, AnnotationHandler annotator)
             throws IOException {
         this(dtm, writer, annotator, false);
     }
@@ -98,8 +97,8 @@ public class CppDataTypeWriter {
      * @param cppStyleComments whether to use C++ style comments
      * @throws IOException
      */
-    public CppDataTypeWriter(DataTypeManager dtm, Writer writer, AnnotationHandler annotator,
-                             boolean cppStyleComments) throws IOException {
+    public BetterDataTypeWriter(DataTypeManager dtm, Writer writer, AnnotationHandler annotator,
+                                boolean cppStyleComments) throws IOException {
         this.dtm = dtm;
         if (dtm != null) {
             dataOrganization = dtm.getDataOrganization();

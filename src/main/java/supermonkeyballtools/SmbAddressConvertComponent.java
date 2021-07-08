@@ -17,14 +17,11 @@ import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
-import ghidra.app.plugin.core.compositeeditor.DuplicateMultipleAction;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.script.GhidraScript;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.dialog.AskAddrDialog;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.program.database.ProgramContentHandler;
-import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ProgramUserData;
@@ -42,7 +39,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
     private ProgramLocation cursorLoc;
     private GameModuleIndex regionIndex;
     private DmeExport dmeExport;
-    private CppExport cppExport;
+    private BetterHeaderExport betterHeaderExport;
 
     public SmbAddressConvertComponent(Plugin plugin, String owner, GameModuleIndex regionIndex) {
         super(plugin.getTool(), "SMB: Convert Address", owner);
@@ -135,7 +132,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
             @Override
             public void actionPerformed(ActionContext context) {
                 saveFile("C++ header", "mkb2_ghidra.h",
-                        cppExport.genCppHeader());
+                        betterHeaderExport.genCppHeader());
             }
         };
         exportCppHeaderAction.setToolBarData(new ToolBarData(DebuggerResources.ICON_CONSOLE, null));
@@ -257,7 +254,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         // Can only initialize exporter once we know the Program in question
         if (dmeExport == null) {
             dmeExport = new DmeExport(cursorLoc.getProgram(), regionIndex);
-            cppExport = new CppExport(cursorLoc.getProgram());
+            betterHeaderExport = new BetterHeaderExport(cursorLoc.getProgram());
         }
 
         updateLocations();

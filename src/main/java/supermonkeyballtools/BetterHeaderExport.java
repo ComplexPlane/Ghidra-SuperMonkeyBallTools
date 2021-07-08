@@ -16,16 +16,16 @@ import java.io.Writer;
 import java.util.Iterator;
 import java.util.regex.Pattern;
 
-public class CppExport {
+public class BetterHeaderExport {
     private final Program program;
     private static final String EOL = System.getProperty("line.separator");
     private static final Pattern cIdentifierPattern = Pattern.compile("[a-zA-Z_][a-zA-Z0-9_]*");
 
-    public CppExport(Program program) {
+    public BetterHeaderExport(Program program) {
         this.program = program;
     }
 
-    private void genExternDecls(CppDataTypeWriter typeWriter, Writer out) throws CancelledException, IOException {
+    private void genExternDecls(BetterDataTypeWriter typeWriter, Writer out) throws CancelledException, IOException {
         out.write("typedef void *pointer;" + EOL + EOL);
 
         out.write("extern \"C\" {" + EOL);
@@ -70,9 +70,9 @@ public class CppExport {
         // TODO write directly to a file instead of generating an intermediate String first
         StringWriter buf = new StringWriter();
         buf.write("#pragma once" + EOL + EOL);
-        CppDataTypeWriter typeWriter;
+        BetterDataTypeWriter typeWriter;
         try {
-            typeWriter = new CppDataTypeWriter(program.getDataTypeManager(), buf);
+            typeWriter = new BetterDataTypeWriter(program.getDataTypeManager(), buf);
             typeWriter.write(program.getDataTypeManager(), TaskMonitor.DUMMY);
             genExternDecls(typeWriter, buf);
         } catch (CancelledException | IOException e) {
