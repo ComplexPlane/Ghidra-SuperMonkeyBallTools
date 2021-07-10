@@ -7,6 +7,8 @@ package supermonkeyballtools;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
@@ -42,6 +44,8 @@ public class BetterDataTypeWriter {
     private DataOrganization dataOrganization;
     private AnnotationHandler annotator;
     private boolean cppStyleComments = false;
+
+    private static final Pattern enumPattern = Pattern.compile("enum (\\S+)");
 
     /**
      * Constructs a new instance of this class using the
@@ -498,11 +502,11 @@ public class BetterDataTypeWriter {
         sb.append("} __attribute__((__packed__));");
         sb.append(EOL);
 
-        sb.append(String.format("static_assert(sizeof(%s) == 0x%X);",
-                composite.getDisplayName(), composite.getLength()));
+        // Useful for debugging
+//        sb.append(String.format("static_assert(sizeof(%s) == 0x%X);%s",
+//                composite.getDisplayName(), composite.getLength(), EOL));
 
         writer.write(sb.toString());
-        writer.write(EOL);
         writer.write(EOL);
     }
 
@@ -601,6 +605,14 @@ public class BetterDataTypeWriter {
                     }
                 }
             }
+
+            // Use typedef-d "enum" name rather than an actual enum type
+            // Yes it's kind of a hack
+            Matcher match = enumPattern.matcher(componentString);
+            if (match.find()) {
+                componentString = match.replaceAll(match.group(1) + " ");
+            }
+
             sb.append(componentString);
         }
         return sb.toString();
@@ -630,13 +642,7 @@ public class BetterDataTypeWriter {
             return;
         }
 
-        String enumSize = null;
-        if (enumm.getLength() == 1) enumSize = "undefined1";
-        else if (enumm.getLength() == 2) enumSize = "undefined2";
-        else if (enumm.getLength() == 4) enumSize = "undefined4";
-        else if (enumm.getLength() == 8) enumSize = "undefined8";
-
-        writer.write("typedef enum " + enumName + " : " + enumSize + " {");
+        writer.write("enum {");
         String descrip = enumm.getDescription();
         if (descrip != null && descrip.length() != 0) {
             writer.write(" " + comment(descrip));
@@ -655,7 +661,15 @@ public class BetterDataTypeWriter {
             }
             writer.write(EOL);
         }
-        writer.write("}" + " " + enumName + ";");
+        writer.write("};");
+        writer.write(EOL);
+
+        String enumSize = null;
+        if (enumm.getLength() == 1) enumSize = "undefined1";
+        else if (enumm.getLength() == 2) enumSize = "undefined2";
+        else if (enumm.getLength() == 4) enumSize = "undefined4";
+        else if (enumm.getLength() == 8) enumSize = "undefined8";
+        writer.write("typedef " + enumSize + " " + enumName + ";");
         writer.write(EOL);
         writer.write(EOL);
     }
@@ -758,13 +772,19 @@ public class BetterDataTypeWriter {
     }
 
     private void writeBuiltIn(BuiltInDataType dt, TaskMonitor monitor) throws IOException {
-        // Assume we're working with C++ and bool is already defined
-        if (dt.isEquivalent(BooleanDataType.dataType)) return;
-
         String declaration = dt.getCTypeDeclaration(dataOrganization);
         if (declaration != null) {
-            writer.write(declaration);
-            writer.write(EOL);
+            if (dt.isEquivalent(BooleanDataType.dataType)) {
+                writer.write("#ifndef __cplusplus");
+                writer.write(EOL);
+                writer.write(declaration);
+                writer.write(EOL);
+                writer.write("#endif");
+                writer.write(EOL);
+            } else {
+                writer.write(declaration);
+                writer.write(EOL);
+            }
         }
     }
 

@@ -28,7 +28,9 @@ public class BetterHeaderExport {
     private void genExternDecls(BetterDataTypeWriter typeWriter, Writer out) throws CancelledException, IOException {
         out.write("typedef void *pointer;" + EOL + EOL);
 
+        out.write("#ifdef __cplusplus" + EOL);
         out.write("extern \"C\" {" + EOL);
+        out.write("#endif" + EOL);
 
         // Write extern global variable decls
         out.write("    /* Global data */" + EOL);
@@ -63,7 +65,9 @@ public class BetterHeaderExport {
             out.write("    " + funcDecl + ";" + EOL);
         }
 
-        out.write("} // extern \"C\"" + EOL + EOL);
+        out.write("#ifdef __cplusplus" + EOL);
+        out.write("} // extern \"C\"" + EOL);
+        out.write("#endif" + EOL);
     }
 
     public String genCppHeader() {

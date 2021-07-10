@@ -131,7 +131,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         DockingAction exportCppHeaderAction = new DockingAction("Export C++ header", getName()) {
             @Override
             public void actionPerformed(ActionContext context) {
-                saveFile("C++ header", "mkb2_ghidra.h",
+                saveFile("C header", "mkb2_ghidra.h",
                         betterHeaderExport.genCppHeader());
             }
         };
