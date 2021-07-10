@@ -648,15 +648,17 @@ public class BetterDataTypeWriter {
             writer.write(" " + comment(descrip));
         }
         writer.write(EOL);
-        String[] names = enumm.getNames();
-        for (int j = 0; j < names.length; j++) {
+        // Write enum elements in value-order
+        long[] values = enumm.getValues();
+        for (int j = 0; j < values.length; j++) {
+            String name = enumm.getName(values[j]);
             writer.write("    ");
-            writer.write(annotator.getPrefix(enumm, names[j]));
-            writer.write(names[j]);
+            writer.write(annotator.getPrefix(enumm, name));
+            writer.write(name);
             writer.write("=");
-            writer.write(Long.toString(enumm.getValue(names[j])));
-            writer.write(annotator.getSuffix(enumm, names[j]));
-            if (j < names.length - 1) {
+            writer.write(Long.toString(values[j]));
+            writer.write(annotator.getSuffix(enumm, name));
+            if (j < values.length - 1) {
                 writer.write(",");
             }
             writer.write(EOL);
