@@ -3,7 +3,10 @@ package supermonkeyballtools;
 import java.awt.*;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -101,6 +104,18 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         exportCubeCodeMapAction.markHelpUnnecessary();
         dockingTool.addLocalAction(this, exportCubeCodeMapAction);
 
+        // Export C/C++ header
+        DockingAction exportApeSphereStuffAction = new DockingAction("Export ApeSphere symbol map and C/C++ header", getName()) {
+            @Override
+            public void actionPerformed(ActionContext context) {
+                saveApeSphereStuff();
+            }
+        };
+        exportApeSphereStuffAction.setToolBarData(new ToolBarData(DebuggerResources.ICON_CONSOLE, null));
+        exportApeSphereStuffAction.setEnabled(true);
+        exportApeSphereStuffAction.markHelpUnnecessary();
+        dockingTool.addLocalAction(this, exportApeSphereStuffAction);
+
         // Export ApeSphere-style symbol map
         DockingAction exportApeSphereMapAction = new DockingAction("Export ApeSphere symbol map", getName()) {
             @Override
@@ -112,6 +127,19 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         exportApeSphereMapAction.setEnabled(true);
         exportApeSphereMapAction.markHelpUnnecessary();
         dockingTool.addLocalAction(this, exportApeSphereMapAction);
+
+        // Export C/C++ header
+        DockingAction exportCppHeaderAction = new DockingAction("Export C++ header", getName()) {
+            @Override
+            public void actionPerformed(ActionContext context) {
+                saveFile("C header", "mkb2_ghidra.h",
+                        betterHeaderExport.genCppHeader());
+            }
+        };
+        exportCppHeaderAction.setToolBarData(new ToolBarData(ProgramContentHandler.PROGRAM_ICON, null));
+        exportCppHeaderAction.setEnabled(true);
+        exportCppHeaderAction.markHelpUnnecessary();
+        dockingTool.addLocalAction(this, exportCppHeaderAction);
 
         // Export DME watchlist
         DockingAction exportDmeAction = new DockingAction("Export Dolphin Memory Engine watch list", getName()) {
@@ -125,20 +153,6 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         exportDmeAction.setEnabled(true);
         exportDmeAction.markHelpUnnecessary();
         dockingTool.addLocalAction(this, exportDmeAction);
-
-        // Export C++ header, intended for ApeSphere
-        // TODO do this at the same time as exporting ApeSphere symbol list
-        DockingAction exportCppHeaderAction = new DockingAction("Export C++ header", getName()) {
-            @Override
-            public void actionPerformed(ActionContext context) {
-                saveFile("C header", "mkb2_ghidra.h",
-                        betterHeaderExport.genCppHeader());
-            }
-        };
-        exportCppHeaderAction.setToolBarData(new ToolBarData(DebuggerResources.ICON_CONSOLE, null));
-        exportCppHeaderAction.setEnabled(true);
-        exportCppHeaderAction.markHelpUnnecessary();
-        dockingTool.addLocalAction(this, exportCppHeaderAction);
     }
 
     private void updateLocations() {
@@ -207,37 +221,89 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         return String.join("\n", symbolStrs);
     }
 
-    private void saveFile(String type, String defaultFilename, String contents) {
+    private String getCachedPath(String pathType, String defaultPath) {
         ProgramUserData pud = cursorLoc.getProgram().getProgramUserData();
         int tid = pud.startTransaction();
         try {
-            // Get previous filepath used if it exists, otherwise use default filename
-            StringPropertyMap smap = pud.getStringProperty("SMB Export Paths", type, true);
+            StringPropertyMap smap = pud.getStringProperty("SMB Export Paths", pathType, true);
             String exportPath = smap.getString(cursorLoc.getProgram().getMinAddress());
             if (exportPath == null) {
-                exportPath = defaultFilename;
+                exportPath = defaultPath;
             }
-
-            JFileChooser dialog = new JFileChooser();
-            dialog.setSelectedFile(new File(exportPath));
-            dialog.setDialogTitle("Specify where to save " + type);
-
-            int result = dialog.showSaveDialog(null);
-            if (result == JFileChooser.APPROVE_OPTION) {
-                // Write chosen filepath to datastore
-                String newPath = dialog.getSelectedFile().getAbsolutePath();
-                smap.add(cursorLoc.getProgram().getMinAddress(), newPath);
-
-                try (PrintWriter writer = new PrintWriter(dialog.getSelectedFile())) {
-                    writer.print(contents);
-                } catch (FileNotFoundException e) {
-                    Msg.error(getClass(), e);
-                }
-
-                Msg.info(getClass(), "Exported " + type + " for program " + cursorLoc.getProgram().getName());
-            }
+            return exportPath;
         } finally {
             pud.endTransaction(tid);
+        }
+    }
+
+    private void setCachedPath(String pathType, String path) {
+        ProgramUserData pud = cursorLoc.getProgram().getProgramUserData();
+        int tid = pud.startTransaction();
+        try {
+            StringPropertyMap smap = pud.getStringProperty("SMB Export Paths", pathType, true);
+            smap.add(cursorLoc.getProgram().getMinAddress(), path);
+        } finally {
+            pud.endTransaction(tid);
+        }
+    }
+
+    private void saveFile(String type, String defaultFilename, String contents) {
+        String exportPath = getCachedPath(type, defaultFilename);
+
+        JFileChooser dialog = new JFileChooser();
+        dialog.setSelectedFile(new File(exportPath));
+        dialog.setDialogTitle("Specify where to save " + type);
+
+        int result = dialog.showSaveDialog(null);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            // Write chosen filepath to datastore
+            String newPath = dialog.getSelectedFile().getAbsolutePath();
+            setCachedPath(type, newPath);
+
+            try (PrintWriter writer = new PrintWriter(dialog.getSelectedFile())) {
+                writer.print(contents);
+            } catch (FileNotFoundException e) {
+                Msg.error(getClass(), e);
+            }
+
+            Msg.info(getClass(), "Exported " + type + " for program " + cursorLoc.getProgram().getName());
+        }
+    }
+
+    private void writeDirFile(File dir, String fileName, String contents) {
+        String filePath = dir.toPath().resolve(fileName).toString();
+        File file = new File(filePath);
+        try {
+            file.createNewFile(); // Creates if doesn't exist already
+            try (PrintWriter writer = new PrintWriter(file)) {
+                writer.print(contents);
+            }
+        } catch (Exception e) {
+            Msg.error(getClass(), e);
+        }
+    }
+
+    private void saveApeSphereStuff() {
+        // Generate stuff first so file dialog popping up indicates they're done exporting
+        String symbolMap = generateApeSphereSymbolMap();
+        String header = betterHeaderExport.genCppHeader();
+
+        JFileChooser dialog = new JFileChooser();
+        dialog.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+        String pathType = "ApeSphere Stuff";
+        String cachedPath = getCachedPath(pathType, null);
+        if (cachedPath != null) {
+            dialog.setSelectedFile(new File(cachedPath));
+        }
+        dialog.setDialogTitle("Specify ApeSphere /rel/include dir, to save symbol map and C/C++ header");
+
+        int result = dialog.showSaveDialog(null);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File saveDir = dialog.getSelectedFile();
+            setCachedPath(pathType, saveDir.getAbsolutePath());
+            writeDirFile(saveDir, "mkb2.us.lst", symbolMap);
+            writeDirFile(saveDir, "mkb2_ghidra.h", header);
         }
     }
 

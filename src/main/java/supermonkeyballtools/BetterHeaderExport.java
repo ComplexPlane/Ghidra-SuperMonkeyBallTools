@@ -7,6 +7,7 @@ import ghidra.program.model.listing.FunctionIterator;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolType;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -80,7 +81,7 @@ public class BetterHeaderExport {
             typeWriter.write(program.getDataTypeManager(), TaskMonitor.DUMMY);
             genExternDecls(typeWriter, buf);
         } catch (CancelledException | IOException e) {
-            // What can we realistically do?
+            Msg.error(getClass(), e);
         }
 
         return buf.toString();
