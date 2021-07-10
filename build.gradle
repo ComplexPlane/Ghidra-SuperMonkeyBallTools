@@ -31,3 +31,8 @@ else {
 	throw new GradleException("GHIDRA_INSTALL_DIR is not defined!")
 }
 //----------------------END "DO NOT MODIFY" SECTION-------------------------------
+
+dependencies {
+	implementation 'com.google.code.gson:gson:2.8.7'
+}
+repositories { mavenCentral() }

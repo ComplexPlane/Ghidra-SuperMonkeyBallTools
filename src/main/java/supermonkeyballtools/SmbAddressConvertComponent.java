@@ -3,7 +3,10 @@ package supermonkeyballtools;
 import java.awt.*;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,15 +20,17 @@ import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.dialog.AskAddrDialog;
 import ghidra.framework.plugintool.Plugin;
-import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramContentHandler;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.ProgramUserData;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.util.StringPropertyMap;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
@@ -35,15 +40,14 @@ public class SmbAddressConvertComponent extends ComponentProvider {
     private JTextArea textArea;
 
     private ProgramLocation cursorLoc;
-    
-    private File lastSymbolExportFile = new File("smb2_symbol_map.json");
-
     private GameModuleIndex regionIndex;
+    private DmeExport dmeExport;
+    private BetterHeaderExport betterHeaderExport;
 
     public SmbAddressConvertComponent(Plugin plugin, String owner, GameModuleIndex regionIndex) {
         super(plugin.getTool(), "SMB: Convert Address", owner);
         this.regionIndex = regionIndex;
-        
+
         buildPanel();
         createActions();
     }
@@ -70,14 +74,14 @@ public class SmbAddressConvertComponent extends ComponentProvider {
                         "Jump to GameCube RAM address",
                         cursorLoc.getProgram().getAddressFactory(),
                         cursorLoc.getAddress()
-                        );
+                );
                 if (dialog.isCanceled()) return;
                 Address addr = dialog.getValueAsAddress();
                 Long ghidraOffset = regionIndex.ramToAddressUser(cursorLoc.getProgram(), addr);
                 if (ghidraOffset == null) return;
                 Address ghidraAddr = cursorLoc.getAddress().getAddressSpace().getAddress(ghidraOffset);
 
-                GoToService service = ((PluginTool) dockingTool).getService(GoToService.class);
+                GoToService service = dockingTool.getService(GoToService.class);
                 if (service != null) {
                     service.goTo(ghidraAddr);
                 }
@@ -92,7 +96,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         DockingAction exportCubeCodeMapAction = new DockingAction("Export cube_code symbol map", getName()) {
             @Override
             public void actionPerformed(ActionContext context) {
-                saveSymbolMap("cube_code", generateCubeCodeSymbolMap());
+                saveFile("cube_code symbol map", "smb2_symbol_map.json", generateCubeCodeSymbolMap());
             }
         };
         exportCubeCodeMapAction.setToolBarData(new ToolBarData(ProgramContentHandler.PROGRAM_ICON, null));
@@ -100,17 +104,55 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         exportCubeCodeMapAction.markHelpUnnecessary();
         dockingTool.addLocalAction(this, exportCubeCodeMapAction);
 
+        // Export C/C++ header
+        DockingAction exportApeSphereStuffAction = new DockingAction("Export ApeSphere symbol map and C/C++ header", getName()) {
+            @Override
+            public void actionPerformed(ActionContext context) {
+                saveApeSphereStuff();
+            }
+        };
+        exportApeSphereStuffAction.setToolBarData(new ToolBarData(DebuggerResources.ICON_CONSOLE, null));
+        exportApeSphereStuffAction.setEnabled(true);
+        exportApeSphereStuffAction.markHelpUnnecessary();
+        dockingTool.addLocalAction(this, exportApeSphereStuffAction);
+
         // Export ApeSphere-style symbol map
         DockingAction exportApeSphereMapAction = new DockingAction("Export ApeSphere symbol map", getName()) {
             @Override
             public void actionPerformed(ActionContext context) {
-                saveSymbolMap("ApeSphere", generateApeSphereSymbolMap());
+                saveFile("ApeSphere symbol map", "mkb2.us.lst", generateApeSphereSymbolMap());
             }
         };
         exportApeSphereMapAction.setToolBarData(new ToolBarData(ProgramContentHandler.PROGRAM_ICON, null));
         exportApeSphereMapAction.setEnabled(true);
         exportApeSphereMapAction.markHelpUnnecessary();
         dockingTool.addLocalAction(this, exportApeSphereMapAction);
+
+        // Export C/C++ header
+        DockingAction exportCppHeaderAction = new DockingAction("Export C/C++ header", getName()) {
+            @Override
+            public void actionPerformed(ActionContext context) {
+                saveFile("C header", "mkb2_ghidra.h",
+                        betterHeaderExport.genCppHeader());
+            }
+        };
+        exportCppHeaderAction.setToolBarData(new ToolBarData(ProgramContentHandler.PROGRAM_ICON, null));
+        exportCppHeaderAction.setEnabled(true);
+        exportCppHeaderAction.markHelpUnnecessary();
+        dockingTool.addLocalAction(this, exportCppHeaderAction);
+
+        // Export DME watchlist
+        DockingAction exportDmeAction = new DockingAction("Export Dolphin Memory Engine watch list", getName()) {
+            @Override
+            public void actionPerformed(ActionContext context) {
+                saveFile("DME watch list", "smb2_watchlist.dmw",
+                        dmeExport.genDmeWatchList());
+            }
+        };
+        exportDmeAction.setToolBarData(new ToolBarData(ProgramContentHandler.PROGRAM_ICON, null));
+        exportDmeAction.setEnabled(true);
+        exportDmeAction.markHelpUnnecessary();
+        dockingTool.addLocalAction(this, exportDmeAction);
     }
 
     private void updateLocations() {
@@ -134,23 +176,23 @@ public class SmbAddressConvertComponent extends ComponentProvider {
 
         if (region != null) {
             textArea.setText(
-                String.format(
-                    "Region               : %s (%s)\n" +
-                    "Ghidra location      : 0x%08x\n" +
-                    "GC RAM location      : 0x%08x\n" +
-                    "REL/DOL file location: %s",
-                    region.name,
-                    writeableStatus,
-                    ghidraAddr.getOffset(),
-                    regionIndex.addressToRam(cursorLoc.getProgram(), ghidraAddr),
-                    fileLocStr
+                    String.format(
+                            "Region               : %s (%s)\n" +
+                                    "Ghidra location      : 0x%08x\n" +
+                                    "GC RAM location      : 0x%08x\n" +
+                                    "REL/DOL file location: %s",
+                            region.name,
+                            writeableStatus,
+                            ghidraAddr.getOffset(),
+                            regionIndex.addressToRam(cursorLoc.getProgram(), ghidraAddr),
+                            fileLocStr
                     )
-                );
+            );
         } else {
             textArea.setText("Cursor not in module");
         }
     }
-    
+
     private String generateCubeCodeSymbolMap() {
         String json = "{\n" +
                 "  \"symbols\": {\n";
@@ -163,7 +205,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
                 symbolStrs.add(String.format("    \"%s\": { \"module_id\": 0, \"section_id\": 0, \"offset\": %d }", s.getName(), s.getAddress().getOffset()));
             }
         }
-        
+
         return json +
                 String.join(",\n", symbolStrs) + "\n" +
                 "  }\n" +
@@ -179,23 +221,89 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         return String.join("\n", symbolStrs);
     }
 
-    private void saveSymbolMap(String type, String contents) {
+    private String getCachedPath(String pathType, String defaultPath) {
+        ProgramUserData pud = cursorLoc.getProgram().getProgramUserData();
+        int tid = pud.startTransaction();
+        try {
+            StringPropertyMap smap = pud.getStringProperty("SMB Export Paths", pathType, true);
+            String exportPath = smap.getString(cursorLoc.getProgram().getMinAddress());
+            if (exportPath == null) {
+                exportPath = defaultPath;
+            }
+            return exportPath;
+        } finally {
+            pud.endTransaction(tid);
+        }
+    }
+
+    private void setCachedPath(String pathType, String path) {
+        ProgramUserData pud = cursorLoc.getProgram().getProgramUserData();
+        int tid = pud.startTransaction();
+        try {
+            StringPropertyMap smap = pud.getStringProperty("SMB Export Paths", pathType, true);
+            smap.add(cursorLoc.getProgram().getMinAddress(), path);
+        } finally {
+            pud.endTransaction(tid);
+        }
+    }
+
+    private void saveFile(String type, String defaultFilename, String contents) {
+        String exportPath = getCachedPath(type, defaultFilename);
+
         JFileChooser dialog = new JFileChooser();
-        dialog.setSelectedFile(lastSymbolExportFile);
-        dialog.setDialogTitle("Specify where to save " + type + " symbol map");
+        dialog.setSelectedFile(new File(exportPath));
+        dialog.setDialogTitle("Specify where to save " + type);
+
         int result = dialog.showSaveDialog(null);
-
         if (result == JFileChooser.APPROVE_OPTION) {
-            File fileToSave = dialog.getSelectedFile();
-            lastSymbolExportFile = fileToSave;
+            // Write chosen filepath to datastore
+            String newPath = dialog.getSelectedFile().getAbsolutePath();
+            setCachedPath(type, newPath);
 
-            try (PrintWriter writer = new PrintWriter(fileToSave)) {
+            try (PrintWriter writer = new PrintWriter(dialog.getSelectedFile())) {
                 writer.print(contents);
             } catch (FileNotFoundException e) {
                 Msg.error(getClass(), e);
             }
 
-            Msg.info(getClass(), "Exported " + type + " symbol map for program " + cursorLoc.getProgram().getName());
+            Msg.info(getClass(), "Exported " + type + " for program " + cursorLoc.getProgram().getName());
+        }
+    }
+
+    private void writeDirFile(File dir, String fileName, String contents) {
+        String filePath = dir.toPath().resolve(fileName).toString();
+        File file = new File(filePath);
+        try {
+            file.createNewFile(); // Creates if doesn't exist already
+            try (PrintWriter writer = new PrintWriter(file)) {
+                writer.print(contents);
+            }
+        } catch (Exception e) {
+            Msg.error(getClass(), e);
+        }
+    }
+
+    private void saveApeSphereStuff() {
+        // Generate stuff first so file dialog popping up indicates they're done exporting
+        String symbolMap = generateApeSphereSymbolMap();
+        String header = betterHeaderExport.genCppHeader();
+
+        JFileChooser dialog = new JFileChooser();
+        dialog.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+        String pathType = "ApeSphere Stuff";
+        String cachedPath = getCachedPath(pathType, null);
+        if (cachedPath != null) {
+            dialog.setSelectedFile(new File(cachedPath));
+        }
+        dialog.setDialogTitle("Specify ApeSphere /rel/include dir, to save symbol map and C/C++ header");
+
+        int result = dialog.showSaveDialog(null);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File saveDir = dialog.getSelectedFile();
+            setCachedPath(pathType, saveDir.getAbsolutePath());
+            writeDirFile(saveDir, "mkb2.us.lst", symbolMap);
+            writeDirFile(saveDir, "mkb2_ghidra.h", header);
         }
     }
 
@@ -208,6 +316,13 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         if (loc == null) return;
 
         cursorLoc = loc;
+
+        // Can only initialize exporter once we know the Program in question
+        if (dmeExport == null) {
+            dmeExport = new DmeExport(cursorLoc.getProgram(), regionIndex);
+            betterHeaderExport = new BetterHeaderExport(cursorLoc.getProgram());
+        }
+
         updateLocations();
     }
 }
