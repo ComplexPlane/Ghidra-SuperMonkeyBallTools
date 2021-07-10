@@ -484,11 +484,29 @@ public class BetterDataTypeWriter {
         sb.append(EOL);
 
         DataTypeComponent[] components = composite.getComponents();
-        for (int i = 0; i < components.length; i++) {
+        int i = 0;
+        while (i < components.length) {
             monitor.checkCanceled();
             DataTypeComponent curr = components[i];
-            DataTypeComponent next = i < components.length - 1 ? components[i + 1] : null;
-            writeComponent(curr, next, composite, sb, monitor);
+
+            int end = i;
+            while (end < components.length && components[end].getDataType().isEquivalent(DataType.DEFAULT)) {
+                end++;
+            }
+
+            int undefCompons = end - i;
+            if (undefCompons > 0) {
+                sb.append(String.format("    %s field_0x%x[0x%x];%s",
+                        DataType.DEFAULT.getDisplayName(),
+                        curr.getOffset(),
+                        undefCompons,
+                        EOL));
+                i = end;
+            } else {
+                DataTypeComponent next = i < components.length - 1 ? components[i + 1] : null;
+                writeComponent(curr, next, composite, sb, monitor);
+                i++;
+            }
         }
 
         if (composite instanceof Structure) {
@@ -502,8 +520,8 @@ public class BetterDataTypeWriter {
         sb.append("} __attribute__((__packed__));");
         sb.append(EOL);
 
-        // Useful for debugging
-//        sb.append(String.format("static_assert(sizeof(%s) == 0x%X);%s",
+        // Useful for debugging incorrect struct sizes
+//        sb.append(String.format("static_assert(sizeof(%s) == 0x%x);%s",
 //                composite.getDisplayName(), composite.getLength(), EOL));
 
         writer.write(sb.toString());
@@ -546,7 +564,7 @@ public class BetterDataTypeWriter {
             }
         }
         if (padLength > 0) {
-            sb.append(String.format("%s    undefined padding_0x%X[%d];",
+            sb.append(String.format("%s    undefined padding_0x%x[0x%x];",
                     EOL, currComponent.getOffset() + currComponent.getLength(), padLength));
         }
 
