@@ -472,7 +472,8 @@ public class BetterDataTypeWriter {
     private void writeCompositeBody(Composite composite, TaskMonitor monitor)
             throws IOException, CancelledException {
 
-        String compositeType = composite instanceof Structure ? "struct" : "union";
+        boolean isStruct = composite instanceof Structure;
+        String compositeType = isStruct ? "struct" : "union";
 
         StringBuffer sb = new StringBuffer();
         sb.append(compositeType + " " + composite.getDisplayName() + " {");
@@ -495,7 +496,7 @@ public class BetterDataTypeWriter {
             }
 
             int undefCompons = end - i;
-            if (undefCompons > 0) {
+            if (isStruct && undefCompons > 0) {
                 sb.append(String.format("    %s field_0x%x[0x%x];%s",
                         DataType.DEFAULT.getDisplayName(),
                         curr.getOffset(),
