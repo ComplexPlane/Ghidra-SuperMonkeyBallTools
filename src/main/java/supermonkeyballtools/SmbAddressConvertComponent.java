@@ -129,7 +129,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         dockingTool.addLocalAction(this, exportApeSphereMapAction);
 
         // Export C/C++ header
-        DockingAction exportCppHeaderAction = new DockingAction("Export C++ header", getName()) {
+        DockingAction exportCppHeaderAction = new DockingAction("Export C/C++ header", getName()) {
             @Override
             public void actionPerformed(ActionContext context) {
                 saveFile("C header", "mkb2_ghidra.h",
