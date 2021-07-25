@@ -510,7 +510,7 @@ public class BetterDataTypeWriter {
             }
         }
 
-        if (composite instanceof Structure) {
+        if (isStruct) {
             Structure s = (Structure) composite;
             if (s.hasFlexibleArrayComponent()) {
                 writeComponent(s.getFlexibleArrayComponent(), null, composite, sb, monitor);
@@ -518,7 +518,7 @@ public class BetterDataTypeWriter {
         }
 
         sb.append(annotator.getSuffix(composite, null));
-        if (composite instanceof Structure) {
+        if (isStruct) {
             sb.append("} __attribute__((__packed__));");
         } else {
             sb.append("};"); // Union
