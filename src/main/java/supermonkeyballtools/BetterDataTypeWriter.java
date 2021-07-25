@@ -518,7 +518,11 @@ public class BetterDataTypeWriter {
         }
 
         sb.append(annotator.getSuffix(composite, null));
-        sb.append("} __attribute__((__packed__));");
+        if (composite instanceof Structure) {
+            sb.append("} __attribute__((__packed__));");
+        } else {
+            sb.append("};"); // Union
+        }
         sb.append(EOL);
 
         // Useful for debugging incorrect struct sizes
