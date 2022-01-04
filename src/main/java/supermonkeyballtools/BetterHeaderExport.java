@@ -46,7 +46,7 @@ public class BetterHeaderExport {
 
             String vol = program.getMemory().getBlock(s.getAddress()).isVolatile() ? "volatile " : "";
             String typeDecl = typeWriter.getTypeDeclaration(s.getName(), type, data.getLength(),
-                    false, false, false, TaskMonitor.DUMMY);
+                    false, false, TaskMonitor.DUMMY);
             out.write("    extern " + vol + typeDecl + ";" + EOL);
         }
 

@@ -457,15 +457,7 @@ public class BetterDataTypeWriter {
             deferWrite(componentType);
 
             // TODO the return value of this is not used--delete?
-            getTypeDeclaration(null, componentType, component.getLength(), false, true, false, monitor);
-        }
-
-        if (composite instanceof Structure) {
-            Structure s = (Structure) composite;
-            if (s.hasFlexibleArrayComponent()) {
-                DataType componentType = s.getFlexibleArrayComponent().getDataType();
-                deferWrite(componentType);
-            }
+            getTypeDeclaration(null, componentType, component.getLength(), true, false, monitor);
         }
     }
 
@@ -510,13 +502,6 @@ public class BetterDataTypeWriter {
             }
         }
 
-        if (isStruct) {
-            Structure s = (Structure) composite;
-            if (s.hasFlexibleArrayComponent()) {
-                writeComponent(s.getFlexibleArrayComponent(), null, composite, sb, monitor);
-            }
-        }
-
         sb.append(annotator.getSuffix(composite, null));
         if (isStruct) {
             sb.append("} __attribute__((__packed__));");
@@ -546,8 +531,7 @@ public class BetterDataTypeWriter {
 
         DataType componentDataType = currComponent.getDataType();
 
-        sb.append(getTypeDeclaration(fieldName, componentDataType, currComponent.getLength(),
-                currComponent.isFlexibleArrayComponent(), false, false, monitor));
+        sb.append(getTypeDeclaration(fieldName, componentDataType, currComponent.getLength(), false, false, monitor));
 
         sb.append(";");
         sb.append(annotator.getSuffix(composite, currComponent));
@@ -561,7 +545,7 @@ public class BetterDataTypeWriter {
         int padLength = 0;
         if (nextComponent != null) {
             padLength = (nextComponent.getOffset() - currComponent.getOffset()) - currComponent.getLength();
-        } else if (!currComponent.isFlexibleArrayComponent()) {
+        } else {
             int finalOffset = currComponent.getOffset() + currComponent.getLength();
             int alignment = composite.getAlignment();
             if (finalOffset % alignment != 0) {
@@ -577,7 +561,7 @@ public class BetterDataTypeWriter {
     }
 
     public String getTypeDeclaration(String name, DataType dataType, int instanceLength,
-                                     boolean isFlexArray, boolean writeEnabled, boolean decayArrays, TaskMonitor monitor)
+                                     boolean writeEnabled, boolean decayArrays, TaskMonitor monitor)
             throws IOException, CancelledException {
 
         if (name == null) {
@@ -620,9 +604,6 @@ public class BetterDataTypeWriter {
                     componentString = baseDataType.getDisplayName() + " " + name + getArrayDimensions(arr);
                 } else {
                     componentString = getDataTypePrefix(dataType) + dataType.getDisplayName();
-                    if (isFlexArray) {
-                        componentString += "[0]";
-                    }
                     if (name.length() != 0) {
                         componentString += " " + name;
                     }
@@ -747,7 +728,7 @@ public class BetterDataTypeWriter {
             // Char signedness is implementation-defined but Ghidra generally assumes it's always signed
             typedefString = "signed char " + typedefName;
         } else {
-            typedefString = getTypeDeclaration(typedefName, dataType, -1, false, true, false, monitor);
+            typedefString = getTypeDeclaration(typedefName, dataType, -1, true, false, monitor);
         }
 
         writer.write("typedef " + typedefString + ";");
@@ -980,7 +961,7 @@ public class BetterDataTypeWriter {
             if (writeEnabled) {
                 write(dataType, monitor);
             }
-            String argument = getTypeDeclaration(paramName, dataType, param.getLength(), false,
+            String argument = getTypeDeclaration(paramName, dataType, param.getLength(),
                     writeEnabled, true, monitor);
 
             buf.append(argument);
