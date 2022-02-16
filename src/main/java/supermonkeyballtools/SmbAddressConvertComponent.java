@@ -216,7 +216,18 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         Program program = cursorLoc.getProgram();
         List<String> symbolStrs = new ArrayList<>();
         for (Symbol s : program.getSymbolTable().getSymbolIterator()) {
-            symbolStrs.add(String.format("%08X:%s", regionIndex.addressToRam(program, s.getAddress()), s.getName()));
+            GameMemoryRegion region = regionIndex.getRegionContainingAddress(program, s.getAddress().getOffset());
+            if (region != null) {
+                if (region.relSection != null) {
+                    // Export symbol as section offset
+                    long symbolSectionOffset = s.getAddress().getOffset() - region.ghidraAddr;
+                    symbolStrs.add(String.format("%X,%X,%08X:%s",
+                            region.relSection.moduleId, region.relSection.sectionId, symbolSectionOffset, s.getName()));
+                } else {
+                    // Export symbol as global address (DOL, 0xE0000000 range)
+                    symbolStrs.add(String.format("%08X:%s", regionIndex.addressToRam(program, s.getAddress()), s.getName()));
+                }
+            }
         }
         return String.join("\n", symbolStrs);
     }
