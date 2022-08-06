@@ -3,10 +3,13 @@ package supermonkeyballtools;
 import ghidra.program.model.address.Address;
 
 import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.OptionalLong;
 
 public class GameMemoryRegion {
     public RegionType regionType;
     public String name;
+    public RelSection relSection;
     public long length;
     public long ghidraAddr;
     public long ramAddr;
@@ -16,13 +19,16 @@ public class GameMemoryRegion {
      * @brief Create a memory region
      */
     public GameMemoryRegion(RegionType regionType,
-                            String name, long length,
+                            String name,
+                            RelSection relSection,
+                            long length,
                             long ghidraAddr,
                             long ramAddr,
                             Long fileAddr)
     {
         this.regionType = regionType;
         this.name = name;
+        this.relSection = relSection;
         this.length = length;
         this.ghidraAddr = ghidraAddr;
         this.ramAddr = ramAddr;

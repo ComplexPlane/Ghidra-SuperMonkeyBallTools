@@ -82,3 +82,6 @@ pom.xml.tag
 
 # Ghidra output
 dist/
+gradle/wrapper/gradle-wrapper.properties
+gradlew
+gradlew.bat
