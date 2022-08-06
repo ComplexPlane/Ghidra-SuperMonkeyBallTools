@@ -104,42 +104,29 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         exportCubeCodeMapAction.markHelpUnnecessary();
         dockingTool.addLocalAction(this, exportCubeCodeMapAction);
 
-        // Export C/C++ header
-        DockingAction exportApeSphereStuffAction = new DockingAction("Export ApeSphere symbol map and C/C++ header", getName()) {
+        // Export C/C++ header, non merged heaps
+        DockingAction exportApeSphereStuffAction = new DockingAction("Export Practice/Workshop Mod symbol map and C/C++ header", getName()) {
             @Override
             public void actionPerformed(ActionContext context) {
-                saveApeSphereStuff();
+                saveApeSphereStuff(false);
             }
         };
         exportApeSphereStuffAction.setToolBarData(new ToolBarData(DebuggerResources.ICON_CONSOLE, null));
         exportApeSphereStuffAction.setEnabled(true);
         exportApeSphereStuffAction.markHelpUnnecessary();
         dockingTool.addLocalAction(this, exportApeSphereStuffAction);
-
-        // Export ApeSphere-style symbol map
-        DockingAction exportApeSphereMapAction = new DockingAction("Export ApeSphere symbol map", getName()) {
+        
+        // Export C/C++ header, non merged heaps
+        DockingAction exportApeSphereMergeHeapsStuffAction = new DockingAction("Export Practice/Workshop Mod symbol map and C/C++ header (merge-heaps)", getName()) {
             @Override
             public void actionPerformed(ActionContext context) {
-                saveFile("ApeSphere symbol map", "mkb2.us.lst", generateApeSphereSymbolMap());
+                saveApeSphereStuff(true);
             }
         };
-        exportApeSphereMapAction.setToolBarData(new ToolBarData(ProgramContentHandler.PROGRAM_ICON, null));
-        exportApeSphereMapAction.setEnabled(true);
-        exportApeSphereMapAction.markHelpUnnecessary();
-        dockingTool.addLocalAction(this, exportApeSphereMapAction);
-
-        // Export C/C++ header
-        DockingAction exportCppHeaderAction = new DockingAction("Export C/C++ header", getName()) {
-            @Override
-            public void actionPerformed(ActionContext context) {
-                saveFile("C header", "mkb2_ghidra.h",
-                        betterHeaderExport.genCppHeader());
-            }
-        };
-        exportCppHeaderAction.setToolBarData(new ToolBarData(ProgramContentHandler.PROGRAM_ICON, null));
-        exportCppHeaderAction.setEnabled(true);
-        exportCppHeaderAction.markHelpUnnecessary();
-        dockingTool.addLocalAction(this, exportCppHeaderAction);
+        exportApeSphereMergeHeapsStuffAction.setToolBarData(new ToolBarData(DebuggerResources.ICON_PROVIDER_PCODE, null));
+        exportApeSphereMergeHeapsStuffAction.setEnabled(true);
+        exportApeSphereMergeHeapsStuffAction.markHelpUnnecessary();
+        dockingTool.addLocalAction(this, exportApeSphereMergeHeapsStuffAction);
 
         // Export DME watchlist
         DockingAction exportDmeAction = new DockingAction("Export Dolphin Memory Engine watch list", getName()) {
@@ -212,19 +199,19 @@ public class SmbAddressConvertComponent extends ComponentProvider {
                 "}\n";
     }
 
-    private String generateApeSphereSymbolMap() {
+    private String generateApeSphereSymbolMap(boolean mergeHeaps) {
         Program program = cursorLoc.getProgram();
         List<String> symbolStrs = new ArrayList<>();
         for (Symbol s : program.getSymbolTable().getSymbolIterator()) {
             GameMemoryRegion region = regionIndex.getRegionContainingAddress(program, s.getAddress().getOffset());
             if (region != null) {
-                if (region.relSection != null) {
+                if (region.relSection != null && mergeHeaps) {
                     // Export symbol as section offset
                     long symbolSectionOffset = s.getAddress().getOffset() - region.ghidraAddr;
                     symbolStrs.add(String.format("%X,%X,%08X:%s",
                             region.relSection.moduleId, region.relSection.sectionId, symbolSectionOffset, s.getName()));
                 } else {
-                    // Export symbol as global address (DOL, 0xE0000000 range)
+                    // Export symbol as global address (DOL, 0xE0000000 range, non merge-heaps)
                     symbolStrs.add(String.format("%08X:%s", regionIndex.addressToRam(program, s.getAddress()), s.getName()));
                 }
             }
@@ -294,9 +281,9 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         }
     }
 
-    private void saveApeSphereStuff() {
+    private void saveApeSphereStuff(boolean mergeHeaps) {
         // Generate stuff first so file dialog popping up indicates they're done exporting
-        String symbolMap = generateApeSphereSymbolMap();
+        String symbolMap = generateApeSphereSymbolMap(mergeHeaps);
         String header = betterHeaderExport.genCppHeader();
 
         JFileChooser dialog = new JFileChooser();
@@ -307,7 +294,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         if (cachedPath != null) {
             dialog.setSelectedFile(new File(cachedPath));
         }
-        dialog.setDialogTitle("Specify ApeSphere /rel/include dir, to save symbol map and C/C++ header");
+        dialog.setDialogTitle("Specify Practice/Workshop mod /rel/include dir, to save symbol map and C/C++ header");
 
         int result = dialog.showSaveDialog(null);
         if (result == JFileChooser.APPROVE_OPTION) {
