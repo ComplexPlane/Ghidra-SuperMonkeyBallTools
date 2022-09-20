@@ -23,5 +23,5 @@ This is accessible from `Window > SMB: Convert Address` in CodeBrowser
 
 ## Installation
 - Copy the zip file to `<Ghidra install directory>/Extensions/Ghidra`
-- Start Ghidra and use the "Install Extensions" dialog to finish the installation (`File > Install Extensions...`)
+- Start Ghidra, go to (`File > Install Extensions...`), and enable the extension
 
