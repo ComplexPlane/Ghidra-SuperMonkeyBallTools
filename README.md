@@ -18,7 +18,7 @@ This is accessible from `Window > SMB: Convert Address` in CodeBrowser
     - **macOS/Linux**: Running `export GHIDRA_INSTALL_DIR=<Absolute path to Ghidra>`
     - Using `-PGHIDRA_INSTALL_DIR=<Absolute path to Ghidra>` when running `gradle`
     - Adding `GHIDRA_INSTALL_DIR` to your environment variables.
-- Run `gradlew.bat` (Windows) or `./gradlew` (Linux)
+- Run `.\gradlew.bat` (Windows) or `./gradlew` (Linux)
 - You'll find the output .zip file inside `/dist`
 
 ## Installation
