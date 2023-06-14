@@ -188,8 +188,15 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         List<String> symbolStrs = new ArrayList<>();
         for (Symbol s : program.getSymbolTable().getSymbolIterator()) {
             GameMemoryRegion module = regionIndex.getRegionContainingAddress(cursorLoc.getProgram(), s.getAddress().getOffset());
-            if (module != null && (module.regionType == RegionType.HARDWARE || module.name.startsWith("MAIN_"))) {
-                symbolStrs.add(String.format("    \"%s\": { \"module_id\": 0, \"section_id\": 0, \"offset\": %d }", s.getName(), s.getAddress().getOffset()));
+            if (module != null) {
+                if (module.regionType == RegionType.HARDWARE || module.name.startsWith("MAIN_")) {
+                    symbolStrs.add(String.format("    \"%s\": { \"module_id\": 0, \"section_id\": 0, \"offset\": %d }", s.getName(), s.getAddress().getOffset()));
+                } else {
+                    GameMemoryRegion region = regionIndex.getRegionContainingAddress(program, s.getAddress().getOffset());
+                    if (region != null) {
+                        symbolStrs.add(String.format("    \"%s\": { \"module_id\": %d, \"section_id\": %d, \"offset\": %d }", s.getName(), region.relSection.moduleId, region.relSection.sectionId, s.getAddress().getOffset() - region.ghidraAddr));
+                    }
+                }
             }
         }
 
