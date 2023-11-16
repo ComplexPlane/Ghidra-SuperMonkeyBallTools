@@ -511,8 +511,8 @@ public class BetterDataTypeWriter {
         sb.append(EOL);
 
         // Useful for debugging incorrect struct sizes
-//        sb.append(String.format("static_assert(sizeof(%s) == 0x%x);%s",
-//                composite.getDisplayName(), composite.getLength(), EOL));
+        sb.append(String.format("static_assert(sizeof(%s) == 0x%x);%s",
+                composite.getDisplayName(), composite.getLength(), EOL));
 
         writer.write(sb.toString());
         writer.write(EOL);
