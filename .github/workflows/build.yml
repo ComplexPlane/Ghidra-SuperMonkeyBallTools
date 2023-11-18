@@ -19,7 +19,7 @@ env:
   GHIDRA_INSTALL_NAME: ghidra_10.4_PUBLIC
 
 jobs:
-  build-ghidra-smb-starter-pack:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
