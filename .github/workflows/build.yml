@@ -37,7 +37,6 @@ jobs:
           curl -L "$GHIDRA_DOWNLOAD_URL" -o ghidra.zip
           unzip ghidra.zip
       - name: Run Gradle
-        # actions/checkout is only for GitHub afaik
         run: ./gradlew
         env: 
           GHIDRA_INSTALL_DIR: ${{ runner.temp }}/${{ env.GHIDRA_INSTALL_NAME }}
@@ -45,3 +44,10 @@ jobs:
         with:
           path: dist/*.zip
           name: Ghidra-SuperMonkeyBallTools.zip
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            ./dist/*.zip
+          draft: true
