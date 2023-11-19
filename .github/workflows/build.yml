@@ -33,17 +33,15 @@ jobs:
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
       - name: Run Gradle
-        run: ./gradlew
+        run: |
+          ./gradlew
+          mv dist/*.zip dist/SuperMonkeyBallTools-${GITHUB_REF_NAME}-${GHIDRA_INSTALL_NAME}.zip
         env: 
           GHIDRA_INSTALL_DIR: ${{ runner.temp }}/${{ env.GHIDRA_INSTALL_NAME }}
       - uses: actions/upload-artifact@v3
         with:
           path: dist/*.zip
-          name: Ghidra-SuperMonkeyBallTools
-      - name: Rename Release Artifact
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          mv dist/*.zip dist/SuperMonkeyBallTools-${GITHUB_REF}-${GHIDRA_INSTALL_NAME}.zip
+          name: SuperMonkeyBallTools
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
