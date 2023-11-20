@@ -30,12 +30,13 @@
 - Export complete C/C++ headers - much better than Ghidra's built-in support
 
 ## Build from Source
-- Ensure you have `JAVA_HOME` set to the path of your JDK installation
+
+- Ensure you have `JAVA_HOME` set to the path of your JDK 17 installation
 - Set `GHIDRA_INSTALL_DIR` to your Ghidra install directory. This can be done in one of the following ways:
     - **Windows**: Running `set GHIDRA_INSTALL_DIR=<Absolute path to Ghidra without quotations>`
     - **macOS/Linux**: Running `export GHIDRA_INSTALL_DIR=<Absolute path to Ghidra>`
-    - Using `-PGHIDRA_INSTALL_DIR=<Absolute path to Ghidra>` when running `gradle`
-    - Adding `GHIDRA_INSTALL_DIR` to your environment variables.
+    - Using `-PGHIDRA_INSTALL_DIR=<Absolute path to Ghidra>` when running Gradle
+    - Adding `GHIDRA_INSTALL_DIR` to your environment variables
 - Run `.\gradlew.bat` (Windows) or `./gradlew` (macOS/Linux)
 - You'll find the output .zip file inside `/dist`
 
