@@ -40,4 +40,6 @@
 - Run `.\gradlew.bat` (Windows) or `./gradlew` (macOS/Linux)
 - You'll find the output .zip file inside `/dist`
 
+## Credits
 
+Thanks to CraftedCart for writing the initial version of this plugin.
