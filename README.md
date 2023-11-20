@@ -1,6 +1,6 @@
 # Super Monkey Ball Tools for Ghidra
 
-Utilities to help reverse engineer Super Monkey Ball 2 with [Ghidra](https://github.com/NationalSecurityAgency/ghidra).
+[Ghidra](https://github.com/NationalSecurityAgency/ghidra) plugin for Super Monkey Ball 2 reverse engineering.
 
 ## Install
 
@@ -25,7 +25,7 @@ Utilities to help reverse engineer Super Monkey Ball 2 with [Ghidra](https://git
 ### Symbol Export
 
 - Export symbol addresses
-  - [SMB2PracticeMod](https://github.com/ComplexPlane/SMB2PracticeMod)/[SMB2WorkshopMod](https://github.com/TheBombSquad/SMB2WorkshopMod) format
+  - [SMB2PracticeMod](https://github.com/ComplexPlane/SMB2PracticeMod) / [SMB2WorkshopMod](https://github.com/TheBombSquad/SMB2WorkshopMod) format
   - [cube_code](https://gitlab.com/CraftedCart/cube_code) format
 - Export complete C/C++ headers - much better than Ghidra's built-in support
 
