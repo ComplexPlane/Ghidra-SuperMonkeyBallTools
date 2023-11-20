@@ -18,7 +18,7 @@
 
 **SMB Address Conversion window**: `Window > SMB: Convert Address` in CodeBrowser
 
-![Alt text](doc/image.png)
+![Convert address window](doc/convert-address-window.png)
 
 **Shift-G**: Go to GameCube RAM address
 
@@ -36,7 +36,7 @@
     - **macOS/Linux**: Running `export GHIDRA_INSTALL_DIR=<Absolute path to Ghidra>`
     - Using `-PGHIDRA_INSTALL_DIR=<Absolute path to Ghidra>` when running `gradle`
     - Adding `GHIDRA_INSTALL_DIR` to your environment variables.
-- Run `.\gradlew.bat` (Windows) or `./gradlew` (Linux)
+- Run `.\gradlew.bat` (Windows) or `./gradlew` (macOS/Linux)
 - You'll find the output .zip file inside `/dist`
 
 
