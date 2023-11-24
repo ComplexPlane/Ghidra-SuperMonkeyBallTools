@@ -1,6 +1,6 @@
-# Super Monkey Ball Tools for Ghidra
+# Ghidra-SuperMonkeyBallTools
 
-[Ghidra](https://github.com/NationalSecurityAgency/ghidra) plugin for Super Monkey Ball 2 reverse engineering.
+[Ghidra](https://github.com/NationalSecurityAgency/ghidra) plugin with tools for Super Monkey Ball 2 reverse engineering.
 
 ## Install
 
