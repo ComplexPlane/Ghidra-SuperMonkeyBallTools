@@ -8,6 +8,7 @@
 - Download the plugin .zip from the [releases page](https://github.com/ComplexPlane/Ghidra-SuperMonkeyBallTools/releases)
 - Move the .zip to `<Ghidra install dir>/Extensions/Ghidra/`
 - Start Ghidra, go to (`File > Install Extensions...`), and enable the extension
+- Restart Ghidra, then open the decompilation in Code Browser and enable the extension when prompted
 
 If you had a previous version of the plugin installed and the windows/hotkeys appear absent, for unknown reasons, you may need to remove `.ghidra/` in your home directory and try again. File an issue if you run into this so it can be debugged further.
 
