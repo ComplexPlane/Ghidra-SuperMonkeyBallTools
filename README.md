@@ -4,9 +4,12 @@
 
 ## Install
 
+- Ensure that [OpenJDK 17](https://adoptium.net/temurin/releases/?version=17) is installed correctly
 - Download the plugin .zip from the [releases page](https://github.com/ComplexPlane/Ghidra-SuperMonkeyBallTools/releases)
 - Move the .zip to `<Ghidra install dir>/Extensions/Ghidra/`
 - Start Ghidra, go to (`File > Install Extensions...`), and enable the extension
+
+If you had a previous version of the plugin installed and the windows/hotkeys appear absent, for unknown reasons, you may need to remove `.ghidra/` in your home directory and try again. File an issue if you run into this so it can be debugged further.
 
 ## Features
 
