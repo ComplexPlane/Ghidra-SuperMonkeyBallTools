@@ -54,7 +54,7 @@ public class SuperMonkeyBallToolsPlugin extends ProgramPlugin {
      * @param tool The plugin tool that this plugin is added to.
      */
     public SuperMonkeyBallToolsPlugin(PluginTool tool) {
-        super(tool, true, true);
+        super(tool);
         regionIndex = new GameModuleIndex();
 
         String pluginName = getName();
@@ -75,7 +75,7 @@ public class SuperMonkeyBallToolsPlugin extends ProgramPlugin {
                 AskAddrDialog dialog = new AskAddrDialog(
                         "Jump to GameCube RAM address",
                         "Jump to GameCube RAM address",
-                        currentLocation.getProgram().getAddressFactory(),
+                        currentLocation.getProgram(),
                         lastGcRamAddress
                         );
                 if (dialog.isCanceled()) return;
