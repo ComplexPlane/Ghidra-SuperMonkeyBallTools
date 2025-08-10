@@ -10,8 +10,8 @@ permissions:
   contents: write
 
 env:
-  GHIDRA_DOWNLOAD_URL: https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_11.2_build/ghidra_11.2_PUBLIC_20240926.zip
-  GHIDRA_INSTALL_NAME: ghidra_11.2_PUBLIC
+  GHIDRA_DOWNLOAD_URL: https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_11.4.1_build/ghidra_11.4.1_PUBLIC_20250731.zip
+  GHIDRA_INSTALL_NAME: ghidra_11.4.1_PUBLIC
 
 jobs:
   build:

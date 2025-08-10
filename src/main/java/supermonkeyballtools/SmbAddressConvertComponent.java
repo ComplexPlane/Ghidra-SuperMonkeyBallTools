@@ -72,7 +72,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
                 AskAddrDialog dialog = new AskAddrDialog(
                         "Jump to GameCube RAM address",
                         "Jump to GameCube RAM address",
-                        cursorLoc.getProgram().getAddressFactory(),
+                        cursorLoc.getProgram(),
                         cursorLoc.getAddress()
                 );
                 if (dialog.isCanceled()) return;
