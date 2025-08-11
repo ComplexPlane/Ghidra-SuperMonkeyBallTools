@@ -6,7 +6,6 @@ import java.util.List;
 
 import ghidra.app.script.AskDialog;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 
 public class GameModuleIndex {
@@ -14,20 +13,7 @@ public class GameModuleIndex {
 
     private List<GameMemoryRegion> regions;
 
-    // Cache a single Program's memory regions
-    // Not initialized in constructor because currentProgram is invalid in constructor of
-    // SuperMonkeyBallToolsPlugin class
-    // Perhaps it's not the responsibility of this class to lazily-initialize itself though
-    private Program program;
-
-    public List<GameMemoryRegion> getProgramMemoryRegions() {
-        return regions;
-    }
-
-    private void ensureRegionMemoryList(Program program) {
-        if (program == this.program) return;
-        this.program = program;
-
+    public GameModuleIndex() {
         // In the end, there isn't a lot of logic as to where exactly REL sections will be allocated in memory.
         // The start address of a REL can vary drastically as it's allocated on a heap, and
         // the sections within a REL can sometimes be loaded with extra padding in-between.
@@ -202,9 +188,11 @@ public class GameModuleIndex {
         }
     }
 
-    public Long ramToAddressUser(Program program, Address addr) {
-        ensureRegionMemoryList(program);
+    public List<GameMemoryRegion> getProgramMemoryRegions() {
+        return regions;
+    }
 
+    public Long ramToAddressUser(Address addr) {
         long offset = addr.getOffset();
 
         // Generate list of candidate memory regions
@@ -247,11 +235,9 @@ public class GameModuleIndex {
         }
     }
 
-    public long addressToRam(Program program, Address addr) {
-        ensureRegionMemoryList(program);
-
+    public long addressToRam(Address addr) {
         long offset = addr.getOffset();
-        GameMemoryRegion region = getRegionContainingAddress(program, offset);
+        GameMemoryRegion region = getRegionContainingAddress(offset);
         if (region != null) {
             return offset - region.ghidraAddr + region.ramAddr;
         }
@@ -260,11 +246,9 @@ public class GameModuleIndex {
         return offset;
     }
 
-    public Long addressToFile(Program program, Address addr) {
-        ensureRegionMemoryList(program);
-
+    public Long addressToFile(Address addr) {
         long offset = addr.getOffset();
-        GameMemoryRegion region = getRegionContainingAddress(program, offset);
+        GameMemoryRegion region = getRegionContainingAddress(offset);
         if (region != null && region.fileAddr != null) {
             return offset - region.ghidraAddr + region.fileAddr;
         }
@@ -274,9 +258,7 @@ public class GameModuleIndex {
         return null;
     }
 
-    public GameMemoryRegion getRegionContainingAddress(Program program, long addr) {
-        ensureRegionMemoryList(program);
-
+    public GameMemoryRegion getRegionContainingAddress(long addr) {
         for (GameMemoryRegion region : regions) {
             if (region.isAddressInRegion(addr)) {
                 return region;

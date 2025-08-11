@@ -16,11 +16,14 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
+import com.google.gson.Gson;
+
 import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
+import ghidra.app.script.AskDialog;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.dialog.AskAddrDialog;
 import ghidra.framework.plugintool.Plugin;
@@ -63,6 +66,16 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         setVisible(true);
     }
 
+    private static class JsonRegion {
+        public String name;
+        public int moduleId;
+        public int sectionIdx;
+        public boolean isBss;
+        public boolean isExecutable;
+        public long ramAddr;
+        public long size;
+    }
+
     private void createActions() {
         // Jump to GC RAM address
         DockingAction jumpToGcRamAction = new DockingAction("Jump to GC RAM address", getName()) {
@@ -90,6 +103,20 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         jumpToGcRamAction.setEnabled(true);
         jumpToGcRamAction.markHelpUnnecessary();
         dockingTool.addLocalAction(this, jumpToGcRamAction);
+
+        // Import module RAM locations
+        DockingAction importModuleRamLocationsAction = new DockingAction("Import module RAM locations", getName()) {
+            @Override
+            public void actionPerformed(ActionContext context) {
+                String contents = loadFile("Module RAM locations JSON file", "locations.json");
+                Gson gson = new Gson();
+                JsonRegion[] regions = gson.fromJson(contents, JsonRegion[].class);
+            }
+        };
+        importModuleRamLocationsAction.setToolBarData(new ToolBarData(DebuggerResources.ICON_ADD, null));
+        importModuleRamLocationsAction.setEnabled(true);
+        importModuleRamLocationsAction.markHelpUnnecessary();
+        dockingTool.addLocalAction(this, importModuleRamLocationsAction);
 
         // Export cube_code symbol map
         DockingAction exportCubeCodeMapAction = new DockingAction("Export cube_code symbol map", getName()) {
@@ -251,6 +278,29 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         }
     }
 
+    private String loadFile(String type, String defaultFilename) {
+        String importPath = getCachedPath(type, defaultFilename);
+
+        JFileChooser dialog = new JFileChooser();
+        dialog.setSelectedFile(new File(importPath)); 
+        dialog.setDialogTitle("Select " + type + " to load");
+
+        int result = dialog.showOpenDialog(null);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            // Cache the chosen filepath
+            String newPath = dialog.getSelectedFile().getAbsolutePath();
+            setCachedPath(type, newPath);
+
+            try {
+                return Files.readString(dialog.getSelectedFile().toPath());
+            } catch (IOException e) {
+                Msg.error(getClass(), e);
+                throw new Error(e);
+            }
+        }
+        return null;
+    }
+
     private void saveFile(String type, String defaultFilename, String contents) {
         String exportPath = getCachedPath(type, defaultFilename);
 
@@ -309,6 +359,11 @@ public class SmbAddressConvertComponent extends ComponentProvider {
             writeDirFile(saveDir, "mkb2.us.lst", symbolMap);
             writeDirFile(saveDir, "mkb2_ghidra.h", header);
         }
+    }
+
+  
+
+    private JsonRegion[] parseLocationsJson(String source) {
     }
 
     @Override

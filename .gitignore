@@ -83,3 +83,4 @@ pom.xml.tag
 # Ghidra output
 dist/
 !/gradle/**
+.vscode
