@@ -80,7 +80,7 @@ public class SuperMonkeyBallToolsPlugin extends ProgramPlugin {
                         );
                 if (dialog.isCanceled()) return;
                 lastGcRamAddress = dialog.getValueAsAddress();
-                Long ghidraOffset = regionIndex.ramToAddressUser(currentProgram, lastGcRamAddress);
+                Long ghidraOffset = regionIndex.ramToAddressUser(lastGcRamAddress);
                 if (ghidraOffset == null) return;
                 Address ghidraAddr = currentLocation.getAddress().getAddressSpace().getAddress(ghidraOffset);
 

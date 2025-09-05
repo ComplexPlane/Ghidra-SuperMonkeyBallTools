@@ -66,16 +66,6 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         setVisible(true);
     }
 
-    private static class JsonRegion {
-        public String name;
-        public int moduleId;
-        public int sectionIdx;
-        public boolean isBss;
-        public boolean isExecutable;
-        public long ramAddr;
-        public long size;
-    }
-
     private void createActions() {
         // Jump to GC RAM address
         DockingAction jumpToGcRamAction = new DockingAction("Jump to GC RAM address", getName()) {
@@ -89,7 +79,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
                 );
                 if (dialog.isCanceled()) return;
                 Address addr = dialog.getValueAsAddress();
-                Long ghidraOffset = regionIndex.ramToAddressUser(cursorLoc.getProgram(), addr);
+                Long ghidraOffset = regionIndex.ramToAddressUser(addr);
                 if (ghidraOffset == null) return;
                 Address ghidraAddr = cursorLoc.getAddress().getAddressSpace().getAddress(ghidraOffset);
 
@@ -109,8 +99,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
             @Override
             public void actionPerformed(ActionContext context) {
                 String contents = loadFile("Module RAM locations JSON file", "locations.json");
-                Gson gson = new Gson();
-                JsonRegion[] regions = gson.fromJson(contents, JsonRegion[].class);
+                regionIndex.loadRegionsFromJson(contents);
             }
         };
         importModuleRamLocationsAction.setToolBarData(new ToolBarData(DebuggerResources.ICON_ADD, null));
@@ -173,10 +162,10 @@ public class SmbAddressConvertComponent extends ComponentProvider {
 
         Program program = cursorLoc.getProgram();
         Address ghidraAddr = cursorLoc.getAddress();
-        GameMemoryRegion region = regionIndex.getRegionContainingAddress(cursorLoc.getProgram(), ghidraAddr.getOffset());
+        GameMemoryRegion region = regionIndex.getRegionContainingAddress(ghidraAddr.getOffset());
 
         String fileLocStr;
-        Long fileLoc = regionIndex.addressToFile(cursorLoc.getProgram(), ghidraAddr);
+        Long fileLoc = regionIndex.addressToFile(ghidraAddr);
         if (fileLoc == null) {
             fileLocStr = "NONE";
         } else {
@@ -197,7 +186,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
                             region.name,
                             writeableStatus,
                             ghidraAddr.getOffset(),
-                            regionIndex.addressToRam(cursorLoc.getProgram(), ghidraAddr),
+                            regionIndex.addressToRam(ghidraAddr),
                             fileLocStr
                     )
             );
@@ -213,14 +202,14 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         Program program = cursorLoc.getProgram();
         List<String> symbolStrs = new ArrayList<>();
         for (Symbol s : program.getSymbolTable().getSymbolIterator()) {
-            GameMemoryRegion module = regionIndex.getRegionContainingAddress(cursorLoc.getProgram(), s.getAddress().getOffset());
+            GameMemoryRegion module = regionIndex.getRegionContainingAddress(s.getAddress().getOffset());
             if (module != null) {
                 if (module.regionType == RegionType.HARDWARE || module.name.startsWith("MAIN_")) {
                     symbolStrs.add(String.format("    \"%s\": { \"module_id\": 0, \"section_id\": 0, \"offset\": %d }", s.getName(), s.getAddress().getOffset()));
                 } else {
-                    GameMemoryRegion region = regionIndex.getRegionContainingAddress(program, s.getAddress().getOffset());
+                    GameMemoryRegion region = regionIndex.getRegionContainingAddress(s.getAddress().getOffset());
                     if (region != null) {
-                        symbolStrs.add(String.format("    \"%s\": { \"module_id\": %d, \"section_id\": %d, \"offset\": %d }", s.getName(), region.relSection.moduleId, region.relSection.sectionId, s.getAddress().getOffset() - region.ghidraAddr));
+                        symbolStrs.add(String.format("    \"%s\": { \"module_id\": %d, \"section_id\": %d, \"offset\": %d }", s.getName(), region.relSection.moduleId, region.relSection.sectionIdx, s.getAddress().getOffset() - region.ghidraAddr));
                     }
                 }
             }
@@ -236,16 +225,16 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         Program program = cursorLoc.getProgram();
         List<String> symbolStrs = new ArrayList<>();
         for (Symbol s : program.getSymbolTable().getSymbolIterator()) {
-            GameMemoryRegion region = regionIndex.getRegionContainingAddress(program, s.getAddress().getOffset());
+            GameMemoryRegion region = regionIndex.getRegionContainingAddress(s.getAddress().getOffset());
             if (region != null) {
                 if (region.relSection != null && mergeHeaps) {
                     // Export symbol as section offset
                     long symbolSectionOffset = s.getAddress().getOffset() - region.ghidraAddr;
                     symbolStrs.add(String.format("%X,%X,%08X:%s",
-                            region.relSection.moduleId, region.relSection.sectionId, symbolSectionOffset, s.getName()));
+                            region.relSection.moduleId, region.relSection.sectionIdx, symbolSectionOffset, s.getName()));
                 } else {
                     // Export symbol as global address (DOL, 0xE0000000 range, non merge-heaps)
-                    symbolStrs.add(String.format("%08X:%s", regionIndex.addressToRam(program, s.getAddress()), s.getName()));
+                    symbolStrs.add(String.format("%08X:%s", regionIndex.addressToRam(s.getAddress()), s.getName()));
                 }
             }
         }
@@ -359,11 +348,6 @@ public class SmbAddressConvertComponent extends ComponentProvider {
             writeDirFile(saveDir, "mkb2.us.lst", symbolMap);
             writeDirFile(saveDir, "mkb2_ghidra.h", header);
         }
-    }
-
-  
-
-    private JsonRegion[] parseLocationsJson(String source) {
     }
 
     @Override

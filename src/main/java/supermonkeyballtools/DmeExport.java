@@ -127,7 +127,7 @@ public class DmeExport {
                 signed = ((AbstractIntegerDataType) type).isSigned();
             }
 
-            long convertedAddr = regionIndex.addressToRam(program, addr);
+            long convertedAddr = regionIndex.addressToRam(addr);
             String addrStr = String.format("%08X", convertedAddr);
             return new VarWatch(addrStr, 0, name, ti.ordinal(), !signed);
         }

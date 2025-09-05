@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.google.gson.Gson;
+
 import ghidra.app.script.AskDialog;
 import ghidra.program.model.address.Address;
 import ghidra.util.Msg;
@@ -11,9 +13,15 @@ import ghidra.util.Msg;
 public class GameModuleIndex {
     private static final long REL_HEADER_SIZE = 0xD8L;
 
-    private List<GameMemoryRegion> regions;
+    private List<GameMemoryRegion> vanillaRegions;
+    private List<GameMemoryRegion> currentRegions;
 
     public GameModuleIndex() {
+        vanillaRegions = genVanillaRegions();
+        currentRegions = genVanillaRegions();
+    }
+
+    private List<GameMemoryRegion> genVanillaRegions() {
         // In the end, there isn't a lot of logic as to where exactly REL sections will be allocated in memory.
         // The start address of a REL can vary drastically as it's allocated on a heap, and
         // the sections within a REL can sometimes be loaded with extra padding in-between.
@@ -23,7 +31,7 @@ public class GameModuleIndex {
 
         // test_mode.rel and option.rel are ignored for now, because they can be loaded at different locations depending on when they are invoked in the debug menu.
         // rel_sample.rel and exoption.rel are also ignored because they are seemingly never loaded anywhere.
-        regions = new ArrayList<>(Arrays.asList(
+        List<GameMemoryRegion> regions = new ArrayList<>(Arrays.asList(
                 new GameMemoryRegion(RegionType.HARDWARE, "OS Globals", null, 0x3100L, 0x80000000L, 0x80000000L, null),
                 new GameMemoryRegion(RegionType.INITIALIZED, "MAIN_.text0", null, 0x2520L, 0x80003100L, 0x80003100L, 0x00000100L),
                 new GameMemoryRegion(RegionType.INITIALIZED, "MAIN_.data0", null, 0x740L, 0x80005620L, 0x80005620L, 0x0007af80L),
@@ -186,10 +194,62 @@ public class GameModuleIndex {
                 region.fileAddr = region.ramAddr - lastModuleRamAddr + REL_HEADER_SIZE;
             }
         }
+
+        return regions;
+    }
+
+    private static class JsonRegion {
+        public String name;
+        public int moduleId;
+        public int sectionIdx;
+        public boolean isBss;
+        public boolean isExecutable;
+        public long ramAddr;
+        public long size;
+    }
+
+    public void loadRegionsFromJson(String contents) {
+        Gson gson = new Gson();
+        JsonRegion[] jsonRegions = gson.fromJson(contents, JsonRegion[].class);
+
+        List<GameMemoryRegion> newRegions = new ArrayList<GameMemoryRegion>();
+        for (GameMemoryRegion vanillaRegion : vanillaRegions) {
+            if (vanillaRegion.regionType == RegionType.HARDWARE || vanillaRegion.relSection == null) {
+                newRegions.add(vanillaRegion);
+                continue;
+            }
+
+            // Find matching JsonRegion if any
+            JsonRegion matchingJson = null;
+            for (JsonRegion jsonRegion : jsonRegions) {
+                if (vanillaRegion.relSection != null && 
+                    vanillaRegion.relSection.moduleId == jsonRegion.moduleId &&
+                    vanillaRegion.relSection.sectionIdx == jsonRegion.sectionIdx) {
+                    matchingJson = jsonRegion;
+                    break;
+                }
+            }
+
+            if (matchingJson != null) {
+                // Create new region with updated RAM address
+                GameMemoryRegion newRegion = new GameMemoryRegion(
+                    vanillaRegion.regionType,
+                    vanillaRegion.name,
+                    vanillaRegion.relSection,
+                    matchingJson.size,
+                    matchingJson.ramAddr,
+                    vanillaRegion.ghidraAddr,
+                    vanillaRegion.fileAddr
+                );
+                newRegions.add(newRegion);
+            }
+        }
+
+        currentRegions = newRegions;
     }
 
     public List<GameMemoryRegion> getProgramMemoryRegions() {
-        return regions;
+        return currentRegions;
     }
 
     public Long ramToAddressUser(Address addr) {
@@ -197,7 +257,7 @@ public class GameModuleIndex {
 
         // Generate list of candidate memory regions
         List<GameMemoryRegion> ramRegions = new ArrayList<>();
-        for (GameMemoryRegion region : regions) {
+        for (GameMemoryRegion region : currentRegions) {
             if (region.isRamAddressInRegion(offset)) {
                 ramRegions.add(region);
             }
@@ -259,7 +319,7 @@ public class GameModuleIndex {
     }
 
     public GameMemoryRegion getRegionContainingAddress(long addr) {
-        for (GameMemoryRegion region : regions) {
+        for (GameMemoryRegion region : currentRegions) {
             if (region.isAddressInRegion(addr)) {
                 return region;
             }
