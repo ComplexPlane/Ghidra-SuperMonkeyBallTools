@@ -95,11 +95,12 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         dockingTool.addLocalAction(this, jumpToGcRamAction);
 
         // Import module RAM locations
+        SmbAddressConvertComponent thisObj = this;
         DockingAction importModuleRamLocationsAction = new DockingAction("Import module RAM locations", getName()) {
             @Override
             public void actionPerformed(ActionContext context) {
                 String contents = loadFile("Module RAM locations JSON file", "locations.json");
-                regionIndex.loadRegionsFromJson(contents);
+                thisObj.regionIndex = new GameModuleIndex(contents);
             }
         };
         importModuleRamLocationsAction.setToolBarData(new ToolBarData(DebuggerResources.ICON_ADD, null));

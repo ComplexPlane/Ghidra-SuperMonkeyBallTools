@@ -13,25 +13,58 @@ import ghidra.util.Msg;
 public class GameModuleIndex {
     private static final long REL_HEADER_SIZE = 0xD8L;
 
-    private List<GameMemoryRegion> vanillaRegions;
-    private List<GameMemoryRegion> currentRegions;
+    private ArrayList<GameMemoryRegion> currentRegions;
 
+    // Vanilla regions
     public GameModuleIndex() {
-        vanillaRegions = genVanillaRegions();
-        currentRegions = genVanillaRegions();
+        ArrayList<GameMemoryRegion> regions = genStaticRegions();
+        regions.addAll(genDynamicVanillaRegions());
+        computeFileAddresses(regions);
+        this.currentRegions = regions;
+    }
+    
+    // Imported regions
+    public GameModuleIndex(String jsonContents) {
+        ArrayList<GameMemoryRegion> regions = genStaticRegions();
+        ArrayList<GameMemoryRegion> vanillaDynamicRegions = genDynamicVanillaRegions();
+
+        Gson gson = new Gson();
+        JsonRegion[] jsonRegions = gson.fromJson(jsonContents, JsonRegion[].class);
+
+        for (JsonRegion jsonRegion : jsonRegions) {
+            // Create partial new region from JSON region
+            GameMemoryRegion newRegion = new GameMemoryRegion(
+                jsonRegion.isBss ? RegionType.BSS : RegionType.INITIALIZED,
+                jsonRegion.name,
+                new RelSection(jsonRegion.moduleId, jsonRegion.sectionIdx),
+                jsonRegion.size,
+                jsonRegion.ramAddr,
+                0, // Ghidra address, to fill in later
+                0L  // File address, to fill in later
+            );
+
+            // Match new region with a vanilla dynamic region to determine Ghidra address
+            for (GameMemoryRegion vanillaDynamicRegion : vanillaDynamicRegions) {
+                if (vanillaDynamicRegion.relSection != null && 
+                    vanillaDynamicRegion.relSection.equals(newRegion.relSection)) {
+                    newRegion.ghidraAddr = vanillaDynamicRegion.ghidraAddr;
+                    break;
+                }
+            }
+            if (newRegion.ghidraAddr == 0) {
+                throw new Error("Failed to match imported JSON region to known vanilla dynamic region");
+            }
+
+            regions.add(newRegion);
+        }
+
+        computeFileAddresses(regions);
+        this.currentRegions = regions;
     }
 
-    private List<GameMemoryRegion> genVanillaRegions() {
-        // In the end, there isn't a lot of logic as to where exactly REL sections will be allocated in memory.
-        // The start address of a REL can vary drastically as it's allocated on a heap, and
-        // the sections within a REL can sometimes be loaded with extra padding in-between.
-        // So, I figure it's better to explicitly initialize all regions for the most part here,
-        // rather than try to precompute them // from the Ghidra sections and make corrections later.
-        // Explicit over implicit.
-
-        // test_mode.rel and option.rel are ignored for now, because they can be loaded at different locations depending on when they are invoked in the debug menu.
-        // rel_sample.rel and exoption.rel are also ignored because they are seemingly never loaded anywhere.
-        List<GameMemoryRegion> regions = new ArrayList<>(Arrays.asList(
+    // Returns as list of regions that will never change with e.g. merge-heaps patch
+    private ArrayList<GameMemoryRegion> genStaticRegions() {
+        ArrayList<GameMemoryRegion> regions = new ArrayList<>(Arrays.asList(
                 new GameMemoryRegion(RegionType.HARDWARE, "OS Globals", null, 0x3100L, 0x80000000L, 0x80000000L, null),
                 new GameMemoryRegion(RegionType.INITIALIZED, "MAIN_.text0", null, 0x2520L, 0x80003100L, 0x80003100L, 0x00000100L),
                 new GameMemoryRegion(RegionType.INITIALIZED, "MAIN_.data0", null, 0x740L, 0x80005620L, 0x80005620L, 0x0007af80L),
@@ -46,6 +79,32 @@ public class GameModuleIndex {
                 new GameMemoryRegion(RegionType.BSS, "MAIN_uninitialized1", null, 0x8e0L, 0x80198b20L, 0x80198b20L, null),
                 new GameMemoryRegion(RegionType.INITIALIZED, "MAIN_.data7", null, 0xb60L, 0x80199400L, 0x80199400L, 0x00142000L),
                 new GameMemoryRegion(RegionType.BSS, "MAIN_uninitialized2", null, 0x24L, 0x80199f60L, 0x80199f60L, null),
+                new GameMemoryRegion(RegionType.HARDWARE, "CP", null, 0x80L, 0xcc000000L, 0xcc000000L, null),
+                new GameMemoryRegion(RegionType.HARDWARE, "PE", null, 0x100L, 0xcc001000L, 0xcc001000L, null),
+                new GameMemoryRegion(RegionType.HARDWARE, "VI", null, 0x100L, 0xcc002000L, 0xcc002000L, null),
+                new GameMemoryRegion(RegionType.HARDWARE, "PI", null, 0x100L, 0xcc003000L, 0xcc003000L, null),
+                new GameMemoryRegion(RegionType.HARDWARE, "MI", null, 0x80L, 0xcc004000L, 0xcc004000L, null),
+                new GameMemoryRegion(RegionType.HARDWARE, "DSP", null, 0x200L, 0xcc005000L, 0xcc005000L, null),
+                new GameMemoryRegion(RegionType.HARDWARE, "DI", null, 0x40L, 0xcc006000L, 0xcc006000L, null),
+                new GameMemoryRegion(RegionType.HARDWARE, "SI", null, 0x100L, 0xcc006400L, 0xcc006400L, null),
+                new GameMemoryRegion(RegionType.HARDWARE, "EXI", null, 0x40L, 0xcc006800L, 0xcc006800L, null),
+                new GameMemoryRegion(RegionType.HARDWARE, "AI", null, 0x40L, 0xcc006c00L, 0xcc006c00L, null),
+                new GameMemoryRegion(RegionType.HARDWARE, "GXFIFO", null, 0x8L, 0xcc008000L, 0xcc008000L, null)
+        ));
+        return regions;
+    }
+
+    private ArrayList<GameMemoryRegion> genDynamicVanillaRegions() {
+        // In the end, there isn't a lot of logic as to where exactly REL sections will be allocated in memory.
+        // The start address of a REL can vary drastically as it's allocated on a heap, and
+        // the sections within a REL can sometimes be loaded with extra padding in-between.
+        // So, I figure it's better to explicitly initialize all regions for the most part here,
+        // rather than try to precompute them // from the Ghidra sections and make corrections later.
+        // Explicit over implicit.
+
+        // test_mode.rel and option.rel are ignored for now, because they can be loaded at different locations depending on when they are invoked in the debug menu.
+        // rel_sample.rel and exoption.rel are also ignored because they are seemingly never loaded anywhere.
+        ArrayList<GameMemoryRegion> regions = new ArrayList<>(Arrays.asList(
                 new GameMemoryRegion(RegionType.INITIALIZED, "mkb2.main_loop_.text0", new RelSection(1, 1), 0x16d428L, 0x80199fa0L, 0x802701d8L, null),
                 new GameMemoryRegion(RegionType.INITIALIZED, "mkb2.main_loop_.data0", new RelSection(1, 2), 0x4L, 0x803073c8L, 0x803dd600L, null),
                 new GameMemoryRegion(RegionType.INITIALIZED, "mkb2.main_loop_.data1", new RelSection(1, 3), 0x4L, 0x803073ccL, 0x803dd604L, null),
@@ -164,20 +223,12 @@ public class GameModuleIndex {
                 new GameMemoryRegion(RegionType.INITIALIZED, "mkb2.exoption_.data1", new RelSection(20, 3), 0x4L, 0x809f1488L, 0x808f6f78L, null),
                 new GameMemoryRegion(RegionType.INITIALIZED, "mkb2.exoption_.data2", new RelSection(20, 4), 0x100L, 0x809f148cL, 0x808f6f80L, null),
                 new GameMemoryRegion(RegionType.INITIALIZED, "mkb2.exoption_.data3", new RelSection(20, 5), 0x51eL, 0x809f158cL, 0x808f7080L, null),
-                new GameMemoryRegion(RegionType.BSS, "mkb2.exoption_.uninitialized0", new RelSection(20, 6), 0x80L, 0x809f1ab0L, 0x808f759eL, null),
-                new GameMemoryRegion(RegionType.HARDWARE, "CP", null, 0x80L, 0xcc000000L, 0xcc000000L, null),
-                new GameMemoryRegion(RegionType.HARDWARE, "PE", null, 0x100L, 0xcc001000L, 0xcc001000L, null),
-                new GameMemoryRegion(RegionType.HARDWARE, "VI", null, 0x100L, 0xcc002000L, 0xcc002000L, null),
-                new GameMemoryRegion(RegionType.HARDWARE, "PI", null, 0x100L, 0xcc003000L, 0xcc003000L, null),
-                new GameMemoryRegion(RegionType.HARDWARE, "MI", null, 0x80L, 0xcc004000L, 0xcc004000L, null),
-                new GameMemoryRegion(RegionType.HARDWARE, "DSP", null, 0x200L, 0xcc005000L, 0xcc005000L, null),
-                new GameMemoryRegion(RegionType.HARDWARE, "DI", null, 0x40L, 0xcc006000L, 0xcc006000L, null),
-                new GameMemoryRegion(RegionType.HARDWARE, "SI", null, 0x100L, 0xcc006400L, 0xcc006400L, null),
-                new GameMemoryRegion(RegionType.HARDWARE, "EXI", null, 0x40L, 0xcc006800L, 0xcc006800L, null),
-                new GameMemoryRegion(RegionType.HARDWARE, "AI", null, 0x40L, 0xcc006c00L, 0xcc006c00L, null),
-                new GameMemoryRegion(RegionType.HARDWARE, "GXFIFO", null, 0x8L, 0xcc008000L, 0xcc008000L, null)
+                new GameMemoryRegion(RegionType.BSS, "mkb2.exoption_.uninitialized0", new RelSection(20, 6), 0x80L, 0x809f1ab0L, 0x808f759eL, null)
         ));
+        return regions;
+    }
 
+    private void computeFileAddresses(ArrayList<GameMemoryRegion> regions) {
         // Compute the file addresses based on the RAM addresses for all REL sections (DOL was manually filled in)
 
         String lastModuleName = null;
@@ -194,8 +245,6 @@ public class GameModuleIndex {
                 region.fileAddr = region.ramAddr - lastModuleRamAddr + REL_HEADER_SIZE;
             }
         }
-
-        return regions;
     }
 
     private static class JsonRegion {
@@ -203,49 +252,8 @@ public class GameModuleIndex {
         public int moduleId;
         public int sectionIdx;
         public boolean isBss;
-        public boolean isExecutable;
         public long ramAddr;
         public long size;
-    }
-
-    public void loadRegionsFromJson(String contents) {
-        Gson gson = new Gson();
-        JsonRegion[] jsonRegions = gson.fromJson(contents, JsonRegion[].class);
-
-        List<GameMemoryRegion> newRegions = new ArrayList<GameMemoryRegion>();
-        for (GameMemoryRegion vanillaRegion : vanillaRegions) {
-            if (vanillaRegion.regionType == RegionType.HARDWARE || vanillaRegion.relSection == null) {
-                newRegions.add(vanillaRegion);
-                continue;
-            }
-
-            // Find matching JsonRegion if any
-            JsonRegion matchingJson = null;
-            for (JsonRegion jsonRegion : jsonRegions) {
-                if (vanillaRegion.relSection != null && 
-                    vanillaRegion.relSection.moduleId == jsonRegion.moduleId &&
-                    vanillaRegion.relSection.sectionIdx == jsonRegion.sectionIdx) {
-                    matchingJson = jsonRegion;
-                    break;
-                }
-            }
-
-            if (matchingJson != null) {
-                // Create new region with updated RAM address
-                GameMemoryRegion newRegion = new GameMemoryRegion(
-                    vanillaRegion.regionType,
-                    vanillaRegion.name,
-                    vanillaRegion.relSection,
-                    matchingJson.size,
-                    matchingJson.ramAddr,
-                    vanillaRegion.ghidraAddr,
-                    vanillaRegion.fileAddr
-                );
-                newRegions.add(newRegion);
-            }
-        }
-
-        currentRegions = newRegions;
     }
 
     public List<GameMemoryRegion> getProgramMemoryRegions() {

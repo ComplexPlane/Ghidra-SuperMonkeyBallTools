@@ -7,4 +7,12 @@ public class RelSection {
         this.moduleId = moduleId;
         this.sectionIdx = sectionId;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        RelSection other = (RelSection) obj;
+        return moduleId == other.moduleId && sectionIdx == other.sectionIdx;
+    }
 }
