@@ -38,8 +38,8 @@ public class GameModuleIndex {
                 jsonRegion.name,
                 new RelSection(jsonRegion.moduleId, jsonRegion.sectionIdx),
                 jsonRegion.size,
+                0L, // Ghidra address, to fill in later
                 jsonRegion.ramAddr,
-                0, // Ghidra address, to fill in later
                 0L  // File address, to fill in later
             );
 
@@ -47,12 +47,10 @@ public class GameModuleIndex {
             for (GameMemoryRegion vanillaDynamicRegion : vanillaDynamicRegions) {
                 if (vanillaDynamicRegion.relSection != null && 
                     vanillaDynamicRegion.relSection.equals(newRegion.relSection)) {
+                    newRegion.regionType = vanillaDynamicRegion.regionType;
                     newRegion.ghidraAddr = vanillaDynamicRegion.ghidraAddr;
                     break;
                 }
-            }
-            if (newRegion.ghidraAddr == 0) {
-                throw new Error("Failed to match imported JSON region to known vanilla dynamic region");
             }
 
             regions.add(newRegion);
@@ -271,6 +269,7 @@ public class GameModuleIndex {
             }
         }
 
+        GameMemoryRegion region = null;
         if (ramRegions.size() == 0) {
             Msg.showError(
                     SuperMonkeyBallToolsPlugin.class,
@@ -278,11 +277,8 @@ public class GameModuleIndex {
                     "Error: no region found",
                     String.format("No region found for RAM address 0x%08x", offset));
 
-            return null;
-
         } else if (ramRegions.size() == 1) {
-            GameMemoryRegion region = ramRegions.get(0);
-            return offset - region.ramAddr + region.ghidraAddr;
+            region = ramRegions.get(0);
 
         } else {
             AskDialog<GameMemoryRegion> dialog = new AskDialog<>(
@@ -296,11 +292,25 @@ public class GameModuleIndex {
                     ramRegions,
                     null
             );
-            if (dialog.isCanceled()) return null;
-
-            GameMemoryRegion region = dialog.getChoiceValue();
-            return offset - region.ramAddr + region.ghidraAddr;
+            if (!dialog.isCanceled()) {
+                region = dialog.getChoiceValue();
+            }
         }
+
+        if (region == null) {
+            return null;
+        }
+        
+        if (region.ghidraAddr == null) {
+            Msg.showInfo(
+                SuperMonkeyBallToolsPlugin.class,
+                null, 
+                String.format("Region '%s' detected, but not present in Ghidra", region.name),
+                String.format("The entered address was found in region '%s', but this region is not present in this Ghidra decompilation.", region.name));
+            return null;
+        }
+
+        return offset - region.ramAddr + region.ghidraAddr;
     }
 
     public long addressToRam(Address addr) {

@@ -11,9 +11,9 @@ public class GameMemoryRegion {
     public String name;
     public RelSection relSection;
     public long length;
-    public long ghidraAddr;
+    public Long ghidraAddr; // No Ghidra address if e.g. imported pracmod/wsmod region
     public long ramAddr;
-    public Long fileAddr;
+    public Long fileAddr; // No file if BSS
 
     /**
      * @brief Create a memory region
@@ -22,7 +22,7 @@ public class GameMemoryRegion {
                             String name,
                             RelSection relSection,
                             long length,
-                            long ghidraAddr,
+                            Long ghidraAddr,
                             long ramAddr,
                             Long fileAddr)
     {
@@ -48,6 +48,9 @@ public class GameMemoryRegion {
     }
 
     public boolean isAddressInRegion(long addr) {
+        if (ghidraAddr == null) {
+            return false;
+        }
         return addr >= ghidraAddr && addr < (ghidraAddr + length);
     }
 

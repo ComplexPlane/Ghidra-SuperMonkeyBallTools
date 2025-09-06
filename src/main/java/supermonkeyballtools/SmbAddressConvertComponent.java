@@ -101,6 +101,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
             public void actionPerformed(ActionContext context) {
                 String contents = loadFile("Module RAM locations JSON file", "locations.json");
                 thisObj.regionIndex = new GameModuleIndex(contents);
+                thisObj.updateLocations();
             }
         };
         importModuleRamLocationsAction.setToolBarData(new ToolBarData(DebuggerResources.ICON_ADD, null));
@@ -178,13 +179,20 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         String writeableStatus = block.isWrite() ? "read-write" : "read-only";
 
         if (region != null) {
+            String moduleId = region.relSection != null 
+                ? String.valueOf(region.relSection.moduleId) 
+                : "?";
+            String regionIdx = region.relSection != null 
+                ? String.valueOf(region.relSection.sectionIdx) 
+                : "?";
             textArea.setText(
-                    String.format(
-                            "Region               : %s (%s)\n" +
-                                    "Ghidra location      : 0x%08x\n" +
-                                    "GC RAM location      : 0x%08x\n" +
-                                    "REL/DOL file location: %s",
+                    String.format("Region         : %s (%s, %s) (%s)\n" +
+                                  "Ghidra location: 0x%08x\n" +
+                                  "GC RAM location: 0x%08x\n" +
+                                  "File location  : %s",
                             region.name,
+                            moduleId,
+                            regionIdx,
                             writeableStatus,
                             ghidraAddr.getOffset(),
                             regionIndex.addressToRam(ghidraAddr),
