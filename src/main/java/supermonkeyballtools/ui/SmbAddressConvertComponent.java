@@ -1,14 +1,11 @@
 package supermonkeyballtools.ui;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Font;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
@@ -16,31 +13,24 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
-import com.google.gson.Gson;
-
 import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.script.AskDialog;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.dialog.AskAddrDialog;
 import ghidra.framework.plugintool.Plugin;
-import ghidra.program.database.ProgramContentHandler;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ProgramUserData;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.util.StringPropertyMap;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
-import supermonkeyballtools.addr.DeltaAddr;
 import supermonkeyballtools.addr.GhidraAddr;
 import supermonkeyballtools.addr.RamAddr;
 import supermonkeyballtools.export.BetterHeaderExport;
+import supermonkeyballtools.export.SymbolExport;
 import supermonkeyballtools.region.Region;
 import supermonkeyballtools.region.RegionIndex;
 
@@ -183,28 +173,6 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         }
     }
 
-    private String generateApeSphereSymbolMap(boolean mergeHeaps) {
-        Program program = cursorLoc.getProgram();
-        List<String> symbolStrs = new ArrayList<>();
-        for (Symbol symbol : program.getSymbolTable().getSymbolIterator()) {
-            GhidraAddr ghidraAddr = new GhidraAddr(symbol.getAddress().getOffset());
-            Region region = regionIndex.getRegionContainingGhidraAddr(ghidraAddr);
-            if (region != null) {
-                if (region.relSection != null && mergeHeaps) {
-                    DeltaAddr delta = ghidraAddr.sub(region.ghidraAddr);
-                    // Export symbol as section offset
-                    symbolStrs.add(String.format("%X,%X,%s:%s",
-                            region.relSection.moduleId, region.relSection.sectionIdx, delta.toString(), symbol.getName()));
-                } else {
-                    // Export symbol as global address (DOL, 0xE0000000 range, non merge-heaps)
-                    RamAddr ramAddr = regionIndex.ghidraAddrToRam(ghidraAddr);
-                    symbolStrs.add(String.format("%s:%s", ramAddr.toString(), symbol.getName()));
-                }
-            }
-        }
-        return String.join("\n", symbolStrs);
-    }
-
     private String getCachedPath(String pathType, String defaultPath) {
         ProgramUserData pud = cursorLoc.getProgram().getProgramUserData();
         int tid = pud.startTransaction();
@@ -268,8 +236,9 @@ public class SmbAddressConvertComponent extends ComponentProvider {
     }
 
     private void saveApeSphereStuff(boolean mergeHeaps) {
-        // Generate stuff first so file dialog popping up indicates they're done exporting
-        String symbolMap = generateApeSphereSymbolMap(mergeHeaps);
+        // Generate stuff first so file dialog popping up indicates they're done
+        // exporting
+        String symbolMap = SymbolExport.generateSymbolMap(this.cursorLoc.getProgram(), this.regionIndex, mergeHeaps);
         String header = betterHeaderExport.genCppHeader();
 
         JFileChooser dialog = new JFileChooser();
