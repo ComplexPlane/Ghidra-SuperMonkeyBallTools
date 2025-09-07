@@ -289,6 +289,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
 
     public void locationChanged(ProgramLocation loc) {
         if (loc == null) return;
+        cursorLoc = loc;
         updateLocations();
     }
 }
