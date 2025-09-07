@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -e
 
-export GHIDRA_INSTALL_DIR=$HOME/build/ghidra_11.4.1_PUBLIC
+export GHIDRA_INSTALL_DIR=$HOME/build/ghidra_11.4.2_PUBLIC
 export JAVA_HOME=/opt/homebrew/opt/openjdk@21
-GHIDRA_USER_DIR=$HOME/Library/ghidra/ghidra_11.4.1_PUBLIC
+GHIDRA_USER_DIR=$HOME/Library/ghidra/ghidra_11.4.2_PUBLIC
 
 rm -rf dist
 ./gradlew
