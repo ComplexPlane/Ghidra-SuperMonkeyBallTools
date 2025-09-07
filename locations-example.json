@@ -1,0 +1,479 @@
+[
+    {
+        "name": "main_loop",
+        "moduleId": 1,
+        "sectionIdx": 1,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2150040024,
+        "size": 1496104
+    },
+    {
+        "name": "main_loop",
+        "moduleId": 1,
+        "sectionIdx": 2,
+        "isBss": false,
+        "isExecutable": false,
+        "ramAddr": 2151536128,
+        "size": 4
+    },
+    {
+        "name": "main_loop",
+        "moduleId": 1,
+        "sectionIdx": 3,
+        "isBss": false,
+        "isExecutable": false,
+        "ramAddr": 2151536132,
+        "size": 4
+    },
+    {
+        "name": "main_loop",
+        "moduleId": 1,
+        "sectionIdx": 4,
+        "isBss": false,
+        "isExecutable": false,
+        "ramAddr": 2151536136,
+        "size": 420680
+    },
+    {
+        "name": "main_loop",
+        "moduleId": 1,
+        "sectionIdx": 5,
+        "isBss": false,
+        "isExecutable": false,
+        "ramAddr": 2151956832,
+        "size": 526012
+    },
+    {
+        "name": "main_loop",
+        "moduleId": 1,
+        "sectionIdx": 6,
+        "isBss": false,
+        "isExecutable": false,
+        "ramAddr": 2153040096,
+        "size": 907852
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 30,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2152483832,
+        "size": 30656
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 32,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2152514488,
+        "size": 32
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 33,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2152514520,
+        "size": 80
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 34,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2152514600,
+        "size": 36
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 35,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2152514636,
+        "size": 36
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 36,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2152514672,
+        "size": 108
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 37,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2152514780,
+        "size": 900
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 39,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2152515680,
+        "size": 64
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 40,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2152515744,
+        "size": 236
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 42,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2152515980,
+        "size": 252
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 44,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2152516232,
+        "size": 48
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 45,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2152516280,
+        "size": 280
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 47,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2152516560,
+        "size": 104
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 49,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2152516664,
+        "size": 68
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 51,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2152516732,
+        "size": 76
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 53,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2152516808,
+        "size": 212
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 54,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2152517020,
+        "size": 396
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 56,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2152517416,
+        "size": 72
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 57,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2152517488,
+        "size": 80
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 58,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2152517568,
+        "size": 64
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 60,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2152517632,
+        "size": 140
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 62,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2152517772,
+        "size": 52
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 63,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2152517824,
+        "size": 1100
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 65,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2152518924,
+        "size": 160
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 67,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2152519084,
+        "size": 560
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 69,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2152519644,
+        "size": 260
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 71,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2152519904,
+        "size": 236
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 74,
+        "isBss": false,
+        "isExecutable": false,
+        "ramAddr": 2152520144,
+        "size": 3680
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 76,
+        "isBss": false,
+        "isExecutable": false,
+        "ramAddr": 2152523824,
+        "size": 36
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 78,
+        "isBss": false,
+        "isExecutable": false,
+        "ramAddr": 2152523860,
+        "size": 36
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 80,
+        "isBss": false,
+        "isExecutable": false,
+        "ramAddr": 2152523896,
+        "size": 72
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 81,
+        "isBss": false,
+        "isExecutable": false,
+        "ramAddr": 2152523968,
+        "size": 72
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 82,
+        "isBss": false,
+        "isExecutable": false,
+        "ramAddr": 2152524040,
+        "size": 44
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 85,
+        "isBss": false,
+        "isExecutable": false,
+        "ramAddr": 2152524084,
+        "size": 2516
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 87,
+        "isBss": false,
+        "isExecutable": false,
+        "ramAddr": 2152526600,
+        "size": 24
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 91,
+        "isBss": false,
+        "isExecutable": false,
+        "ramAddr": 2152526624,
+        "size": 8
+    },
+    {
+        "name": "wsmod",
+        "moduleId": 100,
+        "sectionIdx": 96,
+        "isBss": false,
+        "isExecutable": false,
+        "ramAddr": 2152541792,
+        "size": 10720
+    },
+    {
+        "name": "pracmod",
+        "moduleId": 101,
+        "sectionIdx": 3,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2152552768,
+        "size": 61984
+    },
+    {
+        "name": "pracmod",
+        "moduleId": 101,
+        "sectionIdx": 5,
+        "isBss": false,
+        "isExecutable": false,
+        "ramAddr": 2152614752,
+        "size": 7248
+    },
+    {
+        "name": "pracmod",
+        "moduleId": 101,
+        "sectionIdx": 6,
+        "isBss": false,
+        "isExecutable": false,
+        "ramAddr": 2152622000,
+        "size": 11344
+    },
+    {
+        "name": "pracmod",
+        "moduleId": 101,
+        "sectionIdx": 11,
+        "isBss": false,
+        "isExecutable": false,
+        "ramAddr": 2152658048,
+        "size": 32
+    },
+    {
+        "name": "main_game",
+        "moduleId": 2,
+        "sectionIdx": 1,
+        "isBss": false,
+        "isExecutable": true,
+        "ramAddr": 2157622616,
+        "size": 133620
+    },
+    {
+        "name": "main_game",
+        "moduleId": 2,
+        "sectionIdx": 2,
+        "isBss": false,
+        "isExecutable": false,
+        "ramAddr": 2157756236,
+        "size": 4
+    },
+    {
+        "name": "main_game",
+        "moduleId": 2,
+        "sectionIdx": 3,
+        "isBss": false,
+        "isExecutable": false,
+        "ramAddr": 2157756240,
+        "size": 4
+    },
+    {
+        "name": "main_game",
+        "moduleId": 2,
+        "sectionIdx": 4,
+        "isBss": false,
+        "isExecutable": false,
+        "ramAddr": 2157756248,
+        "size": 3008
+    },
+    {
+        "name": "main_game",
+        "moduleId": 2,
+        "sectionIdx": 5,
+        "isBss": false,
+        "isExecutable": false,
+        "ramAddr": 2157759256,
+        "size": 353308
+    },
+    {
+        "name": "main_game",
+        "moduleId": 2,
+        "sectionIdx": 6,
+        "isBss": false,
+        "isExecutable": false,
+        "ramAddr": 2156921440,
+        "size": 26096
+    }
+]
