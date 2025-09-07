@@ -26,6 +26,8 @@ If you had a previous version of the plugin installed and the windows/hotkeys ap
 
 **Shift-G**: Go to GameCube RAM address
 
+You can also import a DOL/REL RAM address map. See [locations-sample.json](/locations-example.json).
+
 ### Symbol Export
 
 - Export symbol addresses

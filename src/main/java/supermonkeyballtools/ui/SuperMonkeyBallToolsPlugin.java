@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package supermonkeyballtools;
+package supermonkeyballtools.ui;
 
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -32,6 +32,8 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
+import supermonkeyballtools.addr.GhidraAddr;
+import supermonkeyballtools.addr.RamAddr;
 
 //@formatter:off
 @PluginInfo(
@@ -45,8 +47,6 @@ import ghidra.program.util.ProgramLocation;
 public class SuperMonkeyBallToolsPlugin extends ProgramPlugin {
     SmbAddressConvertComponent addressConvertComp;
     GoToService goToService;
-    private GameModuleIndex regionIndex;
-    private Address lastGcRamAddress;
 
     /**
      * Plugin constructor.
@@ -55,38 +55,41 @@ public class SuperMonkeyBallToolsPlugin extends ProgramPlugin {
      */
     public SuperMonkeyBallToolsPlugin(PluginTool tool) {
         super(tool);
-        regionIndex = new GameModuleIndex();
 
         String pluginName = getName();
-        addressConvertComp = new SmbAddressConvertComponent(this, pluginName, regionIndex);
+        addressConvertComp = new SmbAddressConvertComponent(this, pluginName);
 
         // String topicName = this.getClass().getPackage().getName();
         // String anchorName = "HelpAnchor";
         // provider.setHelpLocation(new HelpLocation(topicName, anchorName));
         
 		DockingAction goToRamAction = new NavigatableContextAction("SMB: Go To GameCube RAM Address", getName()) {
+            private Address lastRamAddress;
+
 			@Override
 			public void actionPerformed(NavigatableActionContext context) {
-			    if (lastGcRamAddress == null) {
+			    if (this.lastRamAddress == null) {
 			        // Should be 0x80000000 both in Ghidra and in gamecube RAM
-                    lastGcRamAddress = currentLocation.getProgram().getMinAddress();
+                    this.lastRamAddress = currentLocation.getProgram().getMinAddress();
                 }
 
                 AskAddrDialog dialog = new AskAddrDialog(
                         "Jump to GameCube RAM address",
                         "Jump to GameCube RAM address",
                         currentLocation.getProgram(),
-                        lastGcRamAddress
+                        this.lastRamAddress
                         );
                 if (dialog.isCanceled()) return;
-                lastGcRamAddress = dialog.getValueAsAddress();
-                Long ghidraOffset = regionIndex.ramToAddressUser(currentProgram, lastGcRamAddress);
-                if (ghidraOffset == null) return;
-                Address ghidraAddr = currentLocation.getAddress().getAddressSpace().getAddress(ghidraOffset);
+                this.lastRamAddress = dialog.getValueAsAddress();
+
+                RamAddr ramAddr = new RamAddr(this.lastRamAddress.getOffset());
+                GhidraAddr ghidraAddr = addressConvertComp.getRegionIndex().ramToGhidraAddr(ramAddr);
+                if (ghidraAddr == null) return;
+                Address address = ghidraAddr.toAddress(currentLocation.getAddress().getAddressSpace());
 
                 GoToService service = tool.getService(GoToService.class);
                 if (service != null) {
-                    service.goTo(ghidraAddr);
+                    service.goTo(address);
                 }
 			}
 		};

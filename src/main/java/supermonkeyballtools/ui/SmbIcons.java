@@ -1,4 +1,4 @@
-package supermonkeyballtools;
+package supermonkeyballtools.ui;
 
 import javax.swing.ImageIcon;
 

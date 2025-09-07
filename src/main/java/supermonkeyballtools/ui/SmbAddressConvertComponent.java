@@ -1,14 +1,11 @@
-package supermonkeyballtools;
+package supermonkeyballtools.ui;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Font;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
@@ -24,32 +21,37 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.dialog.AskAddrDialog;
 import ghidra.framework.plugintool.Plugin;
-import ghidra.program.database.ProgramContentHandler;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ProgramUserData;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.util.StringPropertyMap;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
+import supermonkeyballtools.addr.GhidraAddr;
+import supermonkeyballtools.addr.RamAddr;
+import supermonkeyballtools.export.BetterHeaderExport;
+import supermonkeyballtools.export.SymbolExport;
+import supermonkeyballtools.region.Region;
+import supermonkeyballtools.region.RegionIndex;
 
 public class SmbAddressConvertComponent extends ComponentProvider {
     private JPanel panel;
     private JTextArea textArea;
 
     private ProgramLocation cursorLoc;
-    private GameModuleIndex regionIndex;
-    private DmeExport dmeExport;
+    private RegionIndex regionIndex;
     private BetterHeaderExport betterHeaderExport;
 
-    public SmbAddressConvertComponent(Plugin plugin, String owner, GameModuleIndex regionIndex) {
+    public SmbAddressConvertComponent(Plugin plugin, String owner) {
         super(plugin.getTool(), "SMB: Convert Address", owner);
-        this.regionIndex = regionIndex;
+        this.regionIndex = new RegionIndex();
 
         buildPanel();
         createActions();
+    }
+
+    public RegionIndex getRegionIndex() {
+        return this.regionIndex;
     }
 
     private void buildPanel() {
@@ -75,14 +77,14 @@ public class SmbAddressConvertComponent extends ComponentProvider {
                         cursorLoc.getAddress()
                 );
                 if (dialog.isCanceled()) return;
-                Address addr = dialog.getValueAsAddress();
-                Long ghidraOffset = regionIndex.ramToAddressUser(cursorLoc.getProgram(), addr);
-                if (ghidraOffset == null) return;
-                Address ghidraAddr = cursorLoc.getAddress().getAddressSpace().getAddress(ghidraOffset);
+                RamAddr ramAddr = new RamAddr(dialog.getValueAsAddress().getOffset());
+                GhidraAddr ghidraAddr = regionIndex.ramToGhidraAddr(ramAddr);
+                if (ghidraAddr == null) return;
+                Address address = ghidraAddr.toAddress(cursorLoc.getAddress().getAddressSpace());
 
                 GoToService service = dockingTool.getService(GoToService.class);
                 if (service != null) {
-                    service.goTo(ghidraAddr);
+                    service.goTo(address);
                 }
             }
         };
@@ -91,17 +93,23 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         jumpToGcRamAction.markHelpUnnecessary();
         dockingTool.addLocalAction(this, jumpToGcRamAction);
 
-        // Export cube_code symbol map
-        DockingAction exportCubeCodeMapAction = new DockingAction("Export cube_code symbol map", getName()) {
+        // Import module RAM locations
+        SmbAddressConvertComponent thisObj = this;
+        DockingAction importModuleRamLocationsAction = new DockingAction("Import module RAM locations", getName()) {
             @Override
             public void actionPerformed(ActionContext context) {
-                saveFile("cube_code symbol map", "smb2_symbol_map.json", generateCubeCodeSymbolMap());
+                String contents = loadFile("Module RAM locations JSON file", "locations.json");
+                // Should be null if cancelled
+                if (contents != null) {
+                    thisObj.regionIndex = new RegionIndex(contents);
+                    thisObj.updateLocations();
+                }
             }
         };
-        exportCubeCodeMapAction.setToolBarData(new ToolBarData(ProgramContentHandler.PROGRAM_ICON, null));
-        exportCubeCodeMapAction.setEnabled(true);
-        exportCubeCodeMapAction.markHelpUnnecessary();
-        dockingTool.addLocalAction(this, exportCubeCodeMapAction);
+        importModuleRamLocationsAction.setToolBarData(new ToolBarData(DebuggerResources.ICON_ADD, null));
+        importModuleRamLocationsAction.setEnabled(true);
+        importModuleRamLocationsAction.markHelpUnnecessary();
+        dockingTool.addLocalAction(this, importModuleRamLocationsAction);
 
         // Export C/C++ header, non merged heaps
         DockingAction exportApeSphereStuffAction = new DockingAction("Export Practice/Workshop Mod symbol map and C/C++ header", getName()) {
@@ -115,7 +123,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         exportApeSphereStuffAction.markHelpUnnecessary();
         dockingTool.addLocalAction(this, exportApeSphereStuffAction);
         
-        // Export C/C++ header, non merged heaps
+        // Export C/C++ header, merged heaps
         DockingAction exportApeSphereMergeHeapsStuffAction = new DockingAction("Export Practice/Workshop Mod symbol map and C/C++ header (merge-heaps)", getName()) {
             @Override
             public void actionPerformed(ActionContext context) {
@@ -126,103 +134,46 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         exportApeSphereMergeHeapsStuffAction.setEnabled(true);
         exportApeSphereMergeHeapsStuffAction.markHelpUnnecessary();
         dockingTool.addLocalAction(this, exportApeSphereMergeHeapsStuffAction);
-
-        // Export DME watchlist
-        DockingAction exportDmeAction = new DockingAction("Export Dolphin Memory Engine watch list", getName()) {
-            @Override
-            public void actionPerformed(ActionContext context) {
-                saveFile("DME watch list", "smb2_watchlist.dmw",
-                        dmeExport.genDmeWatchList());
-            }
-        };
-        exportDmeAction.setToolBarData(new ToolBarData(ProgramContentHandler.PROGRAM_ICON, null));
-        exportDmeAction.setEnabled(true);
-        exportDmeAction.markHelpUnnecessary();
-        dockingTool.addLocalAction(this, exportDmeAction);
     }
 
     private void updateLocations() {
         if (cursorLoc == null) return;
 
-        Program program = cursorLoc.getProgram();
-        Address ghidraAddr = cursorLoc.getAddress();
-        GameMemoryRegion region = regionIndex.getRegionContainingAddress(cursorLoc.getProgram(), ghidraAddr.getOffset());
-
-        String fileLocStr;
-        Long fileLoc = regionIndex.addressToFile(cursorLoc.getProgram(), ghidraAddr);
-        if (fileLoc == null) {
-            fileLocStr = "NONE";
-        } else {
-            fileLocStr = String.format("0x%08x", fileLoc);
-        }
+        GhidraAddr ghidraAddr = new GhidraAddr(cursorLoc.getAddress().getOffset());
+        Region region = regionIndex.getRegionContainingGhidraAddr(ghidraAddr);
+        RamAddr ramAddr = regionIndex.ghidraAddrToRam(ghidraAddr);
 
         // Get whether the block is read-write or read-only
-        MemoryBlock block = program.getMemory().getBlock(ghidraAddr);
+        MemoryBlock block = cursorLoc.getProgram().getMemory().getBlock(cursorLoc.getAddress());
         String writeableStatus = block.isWrite() ? "read-write" : "read-only";
 
         if (region != null) {
+            String moduleId = region.relSection != null 
+                ? String.valueOf(region.relSection.moduleId) 
+                : "?";
+            String sectionIdx = region.relSection != null 
+                ? String.valueOf(region.relSection.sectionIdx) 
+                : "?";
+            String ghidraLocation = ghidraAddr != null ? ghidraAddr.toString() : "?";
+            String ramLocation = ramAddr != null ? ramAddr.toString() : "?";
             textArea.setText(
-                    String.format(
-                            "Region               : %s (%s)\n" +
-                                    "Ghidra location      : 0x%08x\n" +
-                                    "GC RAM location      : 0x%08x\n" +
-                                    "REL/DOL file location: %s",
-                            region.name,
-                            writeableStatus,
-                            ghidraAddr.getOffset(),
-                            regionIndex.addressToRam(cursorLoc.getProgram(), ghidraAddr),
-                            fileLocStr
+                    String.format("Region          : %s (%s)\n" +
+                                  "Module ID       : %s\n" +
+                                  "Section Index   : %s\n" +
+                                  "Ghidra Location : %s\n" +
+                                  "GC RAM Location : %s\n" +
+                                  "Size            : %s",
+                            region.name, writeableStatus, 
+                            moduleId, 
+                            sectionIdx,
+                            ghidraLocation,
+                            ramLocation,
+                            region.length.toString()
                     )
             );
         } else {
             textArea.setText("Cursor not in module");
         }
-    }
-
-    private String generateCubeCodeSymbolMap() {
-        String json = "{\n" +
-                "  \"symbols\": {\n";
-
-        Program program = cursorLoc.getProgram();
-        List<String> symbolStrs = new ArrayList<>();
-        for (Symbol s : program.getSymbolTable().getSymbolIterator()) {
-            GameMemoryRegion module = regionIndex.getRegionContainingAddress(cursorLoc.getProgram(), s.getAddress().getOffset());
-            if (module != null) {
-                if (module.regionType == RegionType.HARDWARE || module.name.startsWith("MAIN_")) {
-                    symbolStrs.add(String.format("    \"%s\": { \"module_id\": 0, \"section_id\": 0, \"offset\": %d }", s.getName(), s.getAddress().getOffset()));
-                } else {
-                    GameMemoryRegion region = regionIndex.getRegionContainingAddress(program, s.getAddress().getOffset());
-                    if (region != null) {
-                        symbolStrs.add(String.format("    \"%s\": { \"module_id\": %d, \"section_id\": %d, \"offset\": %d }", s.getName(), region.relSection.moduleId, region.relSection.sectionId, s.getAddress().getOffset() - region.ghidraAddr));
-                    }
-                }
-            }
-        }
-
-        return json +
-                String.join(",\n", symbolStrs) + "\n" +
-                "  }\n" +
-                "}\n";
-    }
-
-    private String generateApeSphereSymbolMap(boolean mergeHeaps) {
-        Program program = cursorLoc.getProgram();
-        List<String> symbolStrs = new ArrayList<>();
-        for (Symbol s : program.getSymbolTable().getSymbolIterator()) {
-            GameMemoryRegion region = regionIndex.getRegionContainingAddress(program, s.getAddress().getOffset());
-            if (region != null) {
-                if (region.relSection != null && mergeHeaps) {
-                    // Export symbol as section offset
-                    long symbolSectionOffset = s.getAddress().getOffset() - region.ghidraAddr;
-                    symbolStrs.add(String.format("%X,%X,%08X:%s",
-                            region.relSection.moduleId, region.relSection.sectionId, symbolSectionOffset, s.getName()));
-                } else {
-                    // Export symbol as global address (DOL, 0xE0000000 range, non merge-heaps)
-                    symbolStrs.add(String.format("%08X:%s", regionIndex.addressToRam(program, s.getAddress()), s.getName()));
-                }
-            }
-        }
-        return String.join("\n", symbolStrs);
     }
 
     private String getCachedPath(String pathType, String defaultPath) {
@@ -251,27 +202,27 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         }
     }
 
-    private void saveFile(String type, String defaultFilename, String contents) {
-        String exportPath = getCachedPath(type, defaultFilename);
+    private String loadFile(String type, String defaultFilename) {
+        String importPath = getCachedPath(type, defaultFilename);
 
         JFileChooser dialog = new JFileChooser();
-        dialog.setSelectedFile(new File(exportPath));
-        dialog.setDialogTitle("Specify where to save " + type);
+        dialog.setSelectedFile(new File(importPath)); 
+        dialog.setDialogTitle("Select " + type + " to load");
 
-        int result = dialog.showSaveDialog(null);
+        int result = dialog.showOpenDialog(null);
         if (result == JFileChooser.APPROVE_OPTION) {
-            // Write chosen filepath to datastore
+            // Cache the chosen filepath
             String newPath = dialog.getSelectedFile().getAbsolutePath();
             setCachedPath(type, newPath);
 
-            try (PrintWriter writer = new PrintWriter(dialog.getSelectedFile())) {
-                writer.print(contents);
-            } catch (FileNotFoundException e) {
+            try {
+                return Files.readString(dialog.getSelectedFile().toPath());
+            } catch (IOException e) {
                 Msg.error(getClass(), e);
+                throw new Error(e);
             }
-
-            Msg.info(getClass(), "Exported " + type + " for program " + cursorLoc.getProgram().getName());
         }
+        return null;
     }
 
     private void writeDirFile(File dir, String fileName, String contents) {
@@ -288,8 +239,9 @@ public class SmbAddressConvertComponent extends ComponentProvider {
     }
 
     private void saveApeSphereStuff(boolean mergeHeaps) {
-        // Generate stuff first so file dialog popping up indicates they're done exporting
-        String symbolMap = generateApeSphereSymbolMap(mergeHeaps);
+        // Generate stuff first so file dialog popping up indicates they're done
+        // exporting
+        String symbolMap = SymbolExport.generateSymbolMap(this.cursorLoc.getProgram(), this.regionIndex, mergeHeaps);
         String header = betterHeaderExport.genCppHeader();
 
         JFileChooser dialog = new JFileChooser();
@@ -318,15 +270,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
 
     public void locationChanged(ProgramLocation loc) {
         if (loc == null) return;
-
         cursorLoc = loc;
-
-        // Can only initialize exporter once we know the Program in question
-        if (dmeExport == null) {
-            dmeExport = new DmeExport(cursorLoc.getProgram(), regionIndex);
-            betterHeaderExport = new BetterHeaderExport(cursorLoc.getProgram());
-        }
-
         updateLocations();
     }
 }

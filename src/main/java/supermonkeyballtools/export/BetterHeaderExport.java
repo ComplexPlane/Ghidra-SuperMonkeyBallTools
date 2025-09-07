@@ -1,4 +1,4 @@
-package supermonkeyballtools;
+package supermonkeyballtools.export;
 
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Data;
