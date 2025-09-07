@@ -47,7 +47,7 @@ public class Region {
         if (this.ghidraAddr == null) {
             return false;
         }
-        boolean lowerBound = this.ghidraAddr.compareTo(addr) != -1;
+        boolean lowerBound = addr.compareTo(this.ghidraAddr) != -1;
         boolean upperBound = addr.compareTo(this.ghidraAddr.add(this.length)) == -1;
         return lowerBound && upperBound;
     }
@@ -56,7 +56,7 @@ public class Region {
         if (this.ramAddr == null) {
             return false;
         }
-        boolean lowerBound = this.ramAddr.compareTo(addr) != -1;
+        boolean lowerBound = addr.compareTo(this.ramAddr) != -1;
         boolean upperBound = addr.compareTo(this.ramAddr.add(this.length)) == -1;
         return lowerBound && upperBound;
     }
