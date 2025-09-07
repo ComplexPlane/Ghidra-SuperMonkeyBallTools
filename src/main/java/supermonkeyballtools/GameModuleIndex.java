@@ -15,6 +15,15 @@ public class GameModuleIndex {
 
     private ArrayList<GameMemoryRegion> currentRegions;
 
+    private static class JsonRegion {
+        public String name;
+        public int moduleId;
+        public int sectionIdx;
+        public boolean isBss;
+        public long ramAddr;
+        public long size;
+    }
+
     // Vanilla regions
     public GameModuleIndex() {
         ArrayList<GameMemoryRegion> regions = genStaticRegions();
@@ -38,9 +47,9 @@ public class GameModuleIndex {
                 jsonRegion.name,
                 new RelSection(jsonRegion.moduleId, jsonRegion.sectionIdx),
                 jsonRegion.size,
-                0L, // Ghidra address, to fill in later
+                null, // Ghidra address, to fill in later
                 jsonRegion.ramAddr,
-                0L  // File address, to fill in later
+                null  // File address, to fill in later
             );
 
             // Match new region with a vanilla dynamic region to determine Ghidra address
@@ -233,7 +242,7 @@ public class GameModuleIndex {
         long lastModuleRamAddr = 0;
 
         for (GameMemoryRegion region : regions) {
-            if (region.name.startsWith("mkb2") && region.regionType == RegionType.INITIALIZED) {
+            if (region.regionType == RegionType.INITIALIZED) {
                 String moduleName = region.getModuleName();
                 if (!moduleName.equals(lastModuleName)) {
                     lastModuleName = moduleName;
@@ -245,18 +254,6 @@ public class GameModuleIndex {
         }
     }
 
-    private static class JsonRegion {
-        public String name;
-        public int moduleId;
-        public int sectionIdx;
-        public boolean isBss;
-        public long ramAddr;
-        public long size;
-    }
-
-    public List<GameMemoryRegion> getProgramMemoryRegions() {
-        return currentRegions;
-    }
 
     public Long ramToAddressUser(Address addr) {
         long offset = addr.getOffset();

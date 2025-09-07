@@ -62,6 +62,5 @@ public class GameMemoryRegion {
     @Override
     public String toString() {
         return name;
-//        return String.format("%s: len: %08X, ghidra: %08X, ram: %08X", name, length, ghidraAddr, ramAddr);
     }
 }
