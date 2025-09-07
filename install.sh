@@ -9,5 +9,5 @@ rm -rf dist
 ./gradlew
 rm -rf $GHIDRA_USER_DIR/Extensions/SuperMonkeyBallTools/
 rm -rf $GHIDRA_INSTALL_DIR/Extensions/SuperMonkeyBallTools/
-unzip dist/ghidra_11.4.1_* -d $GHIDRA_USER_DIR/Extensions
+unzip dist/ghidra_11.4.2_* -d $GHIDRA_USER_DIR/Extensions
 
