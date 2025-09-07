@@ -1,7 +1,7 @@
 package supermonkeyballtools.addr;
 
-public class RamAddr {
-    RamAddr(long value) {
+public class RamAddr implements Comparable<RamAddr> {
+    public RamAddr(long value) {
         this.value = value;
     }
 
@@ -18,5 +18,9 @@ public class RamAddr {
     public String toString() {
         return String.format("0x%08X", this.value);
     }
-}
 
+    @Override
+    public int compareTo(RamAddr other) {
+        return Long.compare(this.value, other.value);
+    }
+}

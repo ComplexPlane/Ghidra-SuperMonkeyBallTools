@@ -1,7 +1,12 @@
 package supermonkeyballtools.addr;
 
-public class GhidraAddr {
-    GhidraAddr(long value) {
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.MemoryBlock;
+
+public class GhidraAddr implements Comparable<GhidraAddr> {
+    public GhidraAddr(long value) {
         this.value = value;
     }
 
@@ -17,5 +22,14 @@ public class GhidraAddr {
 
     public String toString() {
         return String.format("0x%08X", this.value);
+    }
+
+    public Address toAddress(AddressSpace addressSpace) {
+        return addressSpace.getAddress(this.value);
+    }
+
+    @Override
+    public int compareTo(GhidraAddr other) {
+        return Long.compare(this.value, other.value);
     }
 }
