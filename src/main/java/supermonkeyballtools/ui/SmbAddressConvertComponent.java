@@ -1,4 +1,4 @@
-package supermonkeyballtools;
+package supermonkeyballtools.ui;
 
 import java.awt.*;
 import java.io.File;

@@ -6,10 +6,10 @@ import com.google.gson.Gson;
 
 import ghidra.app.script.AskDialog;
 import ghidra.util.Msg;
-import supermonkeyballtools.SuperMonkeyBallToolsPlugin;
 import supermonkeyballtools.addr.DeltaAddr;
 import supermonkeyballtools.addr.GhidraAddr;
 import supermonkeyballtools.addr.RamAddr;
+import supermonkeyballtools.ui.SuperMonkeyBallToolsPlugin;
 
 public class RegionIndex {
     private ArrayList<Region> currentRegions;
