@@ -155,7 +155,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
             String moduleId = region.relSection != null 
                 ? String.valueOf(region.relSection.moduleId) 
                 : "?";
-            String regionIdx = region.relSection != null 
+            String sectionIdx = region.relSection != null 
                 ? String.valueOf(region.relSection.sectionIdx) 
                 : "?";
             String ghidraLocation = ghidraAddr != null ? ghidraAddr.toString() : "?";
@@ -165,12 +165,14 @@ public class SmbAddressConvertComponent extends ComponentProvider {
                                   "Module ID       : %s\n" +
                                   "Section Index   : %s\n" +
                                   "Ghidra Location : %s\n" +
-                                  "GC RAM Location : %s",
+                                  "GC RAM Location : %s\n" +
+                                  "Size            : %s",
                             region.name, writeableStatus, 
                             moduleId, 
-                            regionIdx,
+                            sectionIdx,
                             ghidraLocation,
-                            ramLocation
+                            ramLocation,
+                            region.length.toString()
                     )
             );
         } else {
