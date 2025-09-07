@@ -1,6 +1,7 @@
 package supermonkeyballtools.region;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import com.google.gson.Gson;
 
@@ -37,6 +38,7 @@ public class RegionIndex {
 
         Gson gson = new Gson();
         JsonRegion[] jsonRegions = gson.fromJson(jsonContents, JsonRegion[].class);
+        HashSet<Region> unmatchedVanillaRegions = new HashSet<>(vanillaDynamicRegions);
 
         for (JsonRegion jsonRegion : jsonRegions) {
             // Create partial new region from JSON region
@@ -55,10 +57,24 @@ public class RegionIndex {
                     vanillaDynamicRegion.relSection.equals(newRegion.relSection)) {
                     newRegion.regionType = vanillaDynamicRegion.regionType;
                     newRegion.ghidraAddr = vanillaDynamicRegion.ghidraAddr;
+                    unmatchedVanillaRegions.remove(vanillaDynamicRegion);
                     break;
                 }
             }
 
+            regions.add(newRegion);
+        }
+        
+        // Add unmatched vanilla regions without a RAM address
+        for (Region vanillaRegion : unmatchedVanillaRegions) {
+            Region newRegion = new Region(
+                vanillaRegion.regionType,
+                vanillaRegion.name,
+                vanillaRegion.relSection,
+                vanillaRegion.length,
+                vanillaRegion.ghidraAddr,
+                null // Unknown RAM address
+            );
             regions.add(newRegion);
         }
 
