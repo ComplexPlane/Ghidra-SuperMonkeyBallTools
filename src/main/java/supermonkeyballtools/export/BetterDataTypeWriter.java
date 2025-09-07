@@ -1,4 +1,4 @@
-package supermonkeyballtools;
+package supermonkeyballtools.export;
 
 /**
  * Based on Ghidra's DataTypeWriter but with numerous correctness, completeness, and aesthetic fixes.

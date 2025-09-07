@@ -1,4 +1,4 @@
-package supermonkeyballtools;
+package supermonkeyballtools.region;
 
 import supermonkeyballtools.addr.DeltaAddr;
 import supermonkeyballtools.addr.GhidraAddr;

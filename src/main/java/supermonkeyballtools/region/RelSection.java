@@ -1,4 +1,4 @@
-package supermonkeyballtools;
+package supermonkeyballtools.region;
 public class RelSection {
     public final int moduleId;
     public final int sectionIdx;

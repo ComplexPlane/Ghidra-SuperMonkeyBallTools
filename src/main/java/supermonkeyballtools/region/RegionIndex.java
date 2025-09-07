@@ -1,4 +1,4 @@
-package supermonkeyballtools;
+package supermonkeyballtools.region;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,6 +9,7 @@ import com.google.gson.Gson;
 import ghidra.app.script.AskDialog;
 import ghidra.program.model.address.Address;
 import ghidra.util.Msg;
+import supermonkeyballtools.SuperMonkeyBallToolsPlugin;
 import supermonkeyballtools.addr.DeltaAddr;
 import supermonkeyballtools.addr.GhidraAddr;
 import supermonkeyballtools.addr.RamAddr;

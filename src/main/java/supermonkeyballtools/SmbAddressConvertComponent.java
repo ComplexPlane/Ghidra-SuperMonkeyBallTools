@@ -40,6 +40,9 @@ import ghidra.util.SystemUtilities;
 import supermonkeyballtools.addr.DeltaAddr;
 import supermonkeyballtools.addr.GhidraAddr;
 import supermonkeyballtools.addr.RamAddr;
+import supermonkeyballtools.export.BetterHeaderExport;
+import supermonkeyballtools.region.Region;
+import supermonkeyballtools.region.RegionIndex;
 
 public class SmbAddressConvertComponent extends ComponentProvider {
     private JPanel panel;
