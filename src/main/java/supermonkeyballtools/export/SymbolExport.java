@@ -11,7 +11,10 @@ import supermonkeyballtools.region.Region;
 import supermonkeyballtools.region.RegionIndex;
 
 public class SymbolExport {
-    public static String generateSymbolMap(Program program, RegionIndex regionIndex, boolean mergeHeaps) {
+    public static String generateSymbolMap(Program program, boolean mergeHeaps) {
+        // Always use vanilla regions
+        RegionIndex regionIndex = new RegionIndex();
+
         ArrayList<String> symbolStrs = new ArrayList<>();
         for (Symbol symbol : program.getSymbolTable().getSymbolIterator()) {
             GhidraAddr ghidraAddr = new GhidraAddr(symbol.getAddress().getOffset());

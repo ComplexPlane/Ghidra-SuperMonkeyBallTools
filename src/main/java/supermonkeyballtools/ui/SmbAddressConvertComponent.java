@@ -160,9 +160,9 @@ public class SmbAddressConvertComponent extends ComponentProvider {
                     String.format("Region          : %s (%s)\n" +
                                   "Module ID       : %s\n" +
                                   "Section Index   : %s\n" +
-                                  "Ghidra Location : %s\n" +
-                                  "GC RAM Location : %s\n" +
-                                  "Size            : %s",
+                                  "Ghidra Location : 0x%s\n" +
+                                  "GC RAM Location : 0x%s\n" +
+                                  "Size            : 0x%s",
                             region.name, writeableStatus, 
                             moduleId, 
                             sectionIdx,
@@ -241,7 +241,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
     private void saveApeSphereStuff(boolean mergeHeaps) {
         // Generate stuff first so file dialog popping up indicates they're done
         // exporting
-        String symbolMap = SymbolExport.generateSymbolMap(this.cursorLoc.getProgram(), this.regionIndex, mergeHeaps);
+        String symbolMap = SymbolExport.generateSymbolMap(this.cursorLoc.getProgram(), mergeHeaps);
         String header = betterHeaderExport.genCppHeader();
 
         JFileChooser dialog = new JFileChooser();
@@ -271,6 +271,12 @@ public class SmbAddressConvertComponent extends ComponentProvider {
     public void locationChanged(ProgramLocation loc) {
         if (loc == null) return;
         cursorLoc = loc;
+
+        // Can only initialize exporter once we know the Program in question
+        if (betterHeaderExport == null) {
+            betterHeaderExport = new BetterHeaderExport(cursorLoc.getProgram());
+        }
+
         updateLocations();
     }
 }

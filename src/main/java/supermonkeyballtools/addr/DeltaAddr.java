@@ -8,7 +8,7 @@ public class DeltaAddr implements Comparable<DeltaAddr> {
     protected final long value;
 
     public String toString() {
-        return String.format("0x%08X", this.value);
+        return String.format("%08X", this.value);
     }
 
     @Override

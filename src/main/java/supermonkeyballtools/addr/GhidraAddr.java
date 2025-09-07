@@ -21,7 +21,7 @@ public class GhidraAddr implements Comparable<GhidraAddr> {
     }
 
     public String toString() {
-        return String.format("0x%08X", this.value);
+        return String.format("%08X", this.value);
     }
 
     public Address toAddress(AddressSpace addressSpace) {

@@ -96,7 +96,7 @@ public class RegionIndex {
                     SuperMonkeyBallToolsPlugin.class,
                     null,
                     "Error: no region found",
-                    String.format("No region found for RAM address %s", ramAddr.toString()));
+                    String.format("No region found for RAM address 0x%s", ramAddr.toString()));
 
         } else if (ramRegions.size() == 1) {
             region = ramRegions.get(0);
@@ -106,7 +106,7 @@ public class RegionIndex {
                     null,
                     "Pick region",
                     String.format(
-                            "Could not determine region for address %s (region is loaded in an additional REL) - Please pick the loaded region",
+                            "Could not determine region for address 0x%s (region is loaded in an additional REL) - Please pick the loaded region",
                             ramAddr.toString()
                     ),
                     AskDialog.STRING,
