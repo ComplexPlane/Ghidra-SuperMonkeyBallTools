@@ -99,8 +99,11 @@ public class SmbAddressConvertComponent extends ComponentProvider {
             @Override
             public void actionPerformed(ActionContext context) {
                 String contents = loadFile("Module RAM locations JSON file", "locations.json");
-                thisObj.regionIndex = new RegionIndex(contents);
-                thisObj.updateLocations();
+                // Should be null if cancelled
+                if (contents != null) {
+                    thisObj.regionIndex = new RegionIndex(contents);
+                    thisObj.updateLocations();
+                }
             }
         };
         importModuleRamLocationsAction.setToolBarData(new ToolBarData(DebuggerResources.ICON_ADD, null));
