@@ -161,9 +161,9 @@ public class SmbAddressConvertComponent extends ComponentProvider {
             String ghidraLocation = ghidraAddr != null ? ghidraAddr.toString() : "?";
             String ramLocation = ramAddr != null ? ramAddr.toString() : "?";
             textArea.setText(
-                    String.format("Region         : %s (%s, %s) (%s)\n" +
-                                  "Ghidra location: %s\n" +
-                                  "GC RAM location: %s",
+                    String.format("Region          : %s (%s, %s) (%s)\n" +
+                                  "Ghidra location : %s\n" +
+                                  "GC RAM location : %s",
                             region.name, moduleId, regionIdx, writeableStatus,
                             ghidraLocation,
                             ramLocation
