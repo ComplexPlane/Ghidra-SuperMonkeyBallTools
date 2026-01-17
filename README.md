@@ -4,7 +4,7 @@
 
 ## Install
 
-- Ensure that [OpenJDK 17](https://adoptium.net/temurin/releases/?version=17) is installed correctly
+- Ensure that [OpenJDK 21](https://adoptium.net/temurin/releases/?version=21&os=any&arch=any) is installed correctly
 - Download the plugin .zip from the [releases page](https://github.com/ComplexPlane/Ghidra-SuperMonkeyBallTools/releases)
 - Move the .zip to `<Ghidra install dir>/Extensions/Ghidra/`
 - Start Ghidra, go to (`File > Install Extensions...`), and enable the extension
