@@ -47,6 +47,29 @@ public class BetterDataTypeWriter {
 
     private static final Pattern enumPattern = Pattern.compile("enum (\\S+)");
 
+    private static String namePrefix(String name) {
+        return "MKB(" + name + ")";
+    }
+
+    private static String typePrefix(DataType dataType) {
+        String name = "";
+
+        while (dataType instanceof Pointer) {
+            name = name + " *";
+            dataType = ((Pointer )dataType).getDataType();
+        }
+
+        if (dataType instanceof BuiltInDataType) {
+            name = dataType.getDisplayName() + name;
+        } else if (dataType == null) {
+            name = "void " + name;
+        } else {
+            name = namePrefix(dataType.getDisplayName()) + name;
+        }
+
+        return name;
+    }
+
     /**
      * Constructs a new instance of this class using the
      * given writer. The default annotation handler is used.
@@ -285,7 +308,7 @@ public class BetterDataTypeWriter {
         ++writerDepth;
 
         if (dt.equals(DataType.DEFAULT)) {
-            writer.write("typedef unsigned char   " + DataType.DEFAULT.getName() + ";");
+            writer.write("typedef unsigned char   " + typePrefix(DataType.DEFAULT) + ";");
             writer.write(EOL);
             writer.write(EOL);
         } else if (dt instanceof Dynamic) {
@@ -429,7 +452,7 @@ public class BetterDataTypeWriter {
                                     replacementBaseType.getClass().getSimpleName());
                 } else {
                     int elementCnt = (length + elementLen - 1) / elementLen;
-                    return replacementBaseType.getDisplayName() + " " + fieldName + "[" +
+                    return typePrefix(replacementBaseType) + " " + fieldName + "[" +
                             elementCnt + "]";
                 }
             }
@@ -443,8 +466,10 @@ public class BetterDataTypeWriter {
         String compositeType = composite instanceof Structure ? "struct" : "union";
 
         // output original name as a typedef
-        writer.write("typedef " + compositeType + " " + composite.getDisplayName() + " " +
-                composite.getDisplayName() + ", *P" + composite.getDisplayName() + ";");
+        writer.write("typedef " + compositeType + " " + 
+                typePrefix(composite) + " " +
+                typePrefix(composite) + ", *" + 
+                namePrefix("P" + composite.getDisplayName()) + ";");
         writer.write(EOL);
         writer.write(EOL);
 
@@ -457,7 +482,7 @@ public class BetterDataTypeWriter {
             deferWrite(componentType);
 
             // TODO the return value of this is not used--delete?
-            getTypeDeclaration(null, componentType, component.getLength(), true, false, monitor);
+            getTypeDeclaration(null, componentType, component.getLength(), true, monitor);
         }
     }
 
@@ -468,7 +493,7 @@ public class BetterDataTypeWriter {
         String compositeType = isStruct ? "struct" : "union";
 
         StringBuffer sb = new StringBuffer();
-        sb.append(compositeType + " " + composite.getDisplayName() + " {");
+        sb.append(compositeType + " " + typePrefix(composite) + " {");
 
         String descrip = composite.getDescription();
         if (descrip != null && descrip.length() > 0) {
@@ -490,7 +515,7 @@ public class BetterDataTypeWriter {
             int undefCompons = end - i;
             if (isStruct && undefCompons > 0) {
                 sb.append(String.format("    %s field_0x%x[0x%x];%s",
-                        DataType.DEFAULT.getDisplayName(),
+                        typePrefix(DataType.DEFAULT),
                         curr.getOffset(),
                         undefCompons,
                         EOL));
@@ -512,7 +537,7 @@ public class BetterDataTypeWriter {
 
         // Useful for debugging incorrect struct sizes
         sb.append(String.format("static_assert(sizeof(%s) == 0x%x);%s",
-                composite.getDisplayName(), composite.getLength(), EOL));
+                typePrefix(composite), composite.getLength(), EOL));
 
         writer.write(sb.toString());
         writer.write(EOL);
@@ -531,7 +556,7 @@ public class BetterDataTypeWriter {
 
         DataType componentDataType = currComponent.getDataType();
 
-        sb.append(getTypeDeclaration(fieldName, componentDataType, currComponent.getLength(), false, false, monitor));
+        sb.append(getTypeDeclaration(fieldName, componentDataType, currComponent.getLength(), false, monitor));
 
         sb.append(";");
         sb.append(annotator.getSuffix(composite, currComponent));
@@ -553,15 +578,16 @@ public class BetterDataTypeWriter {
             }
         }
         if (padLength > 0) {
-            sb.append(String.format("%s    undefined padding_0x%x[0x%x];",
-                    EOL, currComponent.getOffset() + currComponent.getLength(), padLength));
+            String padTypeName = namePrefix("undefined");
+            sb.append(String.format("%s    %s padding_0x%x[0x%x];",
+                    EOL, padTypeName, currComponent.getOffset() + currComponent.getLength(), padLength));
         }
 
         sb.append(EOL);
     }
 
     public String getTypeDeclaration(String name, DataType dataType, int instanceLength,
-                                     boolean writeEnabled, boolean decayArrays, TaskMonitor monitor)
+                                     boolean writeEnabled, TaskMonitor monitor)
             throws IOException, CancelledException {
 
         if (name == null) {
@@ -576,7 +602,8 @@ public class BetterDataTypeWriter {
                 sb.append(componentString);
             } else {
                 sb.append(comment(
-                        "ignoring dynamic datatype inside composite: " + dataType.getDisplayName()));
+                        "ignoring dynamic datatype inside composite: " 
+                        + typePrefix(dataType)));
                 sb.append(EOL);
             }
         }
@@ -601,9 +628,9 @@ public class BetterDataTypeWriter {
                 // TODO deal with nested array pointer types
                 if (dataType instanceof Pointer && ((Pointer) dataType).getDataType() instanceof Array) {
                     Array arr = (Array) ((Pointer) dataType).getDataType();
-                    componentString = baseDataType.getDisplayName() + " " + name + getArrayDimensions(arr);
+                    componentString = typePrefix(baseDataType) + " " + name + getArrayDimensions(arr);
                 } else {
-                    componentString = getDataTypePrefix(dataType) + dataType.getDisplayName();
+                    componentString = getDataTypePrefix(dataType) + typePrefix(dataType);
                     if (name.length() != 0) {
                         componentString += " " + name;
                     }
@@ -636,7 +663,7 @@ public class BetterDataTypeWriter {
 
     private void writeEnum(ghidra.program.model.data.Enum enumm, TaskMonitor monitor) throws IOException {
 
-        String enumName = enumm.getDisplayName();
+        String enumName = typePrefix(enumm);
         if (enumName.startsWith("define_") && enumName.length() > 7 && enumm.getCount() == 1 &&
                 enumm.getLength() == 8) {
             long val = enumm.getValues()[0];
@@ -658,7 +685,7 @@ public class BetterDataTypeWriter {
             String name = enumm.getName(values[j]);
             writer.write("    ");
             writer.write(annotator.getPrefix(enumm, name));
-            writer.write(name);
+            writer.write(namePrefix(name));
             writer.write("=");
             writer.write(Long.toString(values[j]));
             writer.write(annotator.getSuffix(enumm, name));
@@ -687,9 +714,9 @@ public class BetterDataTypeWriter {
      */
     private void writeTypeDef(TypeDef typeDef, TaskMonitor monitor)
             throws IOException, CancelledException {
-        String typedefName = typeDef.getDisplayName();
+        String typedefName = typePrefix(typeDef);
         DataType dataType = typeDef.getDataType();
-        String dataTypeName = dataType.getDisplayName();
+        String dataTypeName = typePrefix(dataType);
         if (isIntegral(typedefName, dataTypeName)) {
             return;
         }
@@ -728,7 +755,7 @@ public class BetterDataTypeWriter {
             // Char signedness is implementation-defined but Ghidra generally assumes it's always signed
             typedefString = "signed char " + typedefName;
         } else {
-            typedefString = getTypeDeclaration(typedefName, dataType, -1, true, false, monitor);
+            typedefString = getTypeDeclaration(typedefName, dataType, -1, true, monitor);
         }
 
         writer.write("typedef " + typedefString + ";");
@@ -781,15 +808,13 @@ public class BetterDataTypeWriter {
         String declaration = dt.getCTypeDeclaration(dataOrganization);
         if (declaration != null) {
             if (dt.isEquivalent(BooleanDataType.dataType)) {
-                writer.write("#ifndef __cplusplus");
-                writer.write(EOL);
-                writer.write(declaration);
-                writer.write(EOL);
-                writer.write("#endif");
-                writer.write(EOL);
+                writer.write("#ifndef __cplusplus" + EOL);
+                writer.write("#if __STDC_VERSION__ < 23" + EOL);
+                writer.write("#include <stdbool.h>" + EOL);
+                writer.write("#endif" + EOL);
+                writer.write("#endif" + EOL);
             } else {
-                writer.write(declaration);
-                writer.write(EOL);
+                writer.write(declaration + EOL);
             }
         }
     }
@@ -921,7 +946,7 @@ public class BetterDataTypeWriter {
             if (!(functionPointerArrayType instanceof FunctionDefinition)) {
                 writer.append(
                         comment("Attempting output of invalid function pointer type declaration: " +
-                                originalType.getDisplayName()));
+                                typePrefix(originalType)));
             }
             if (name != null) {
                 sb.append(name);
@@ -943,7 +968,7 @@ public class BetterDataTypeWriter {
             return getFunctionPointerString((FunctionDefinition) baseReturnType, sb.toString(),
                     returnType, writeEnabled, monitor);
         }
-        return returnType.getDisplayName() + " " + sb.toString();
+        return typePrefix(returnType) + " " + sb.toString();
     }
 
     public String getParameterListString(FunctionDefinition fd, boolean includeParamNames,
@@ -962,7 +987,7 @@ public class BetterDataTypeWriter {
                 write(dataType, monitor);
             }
             String argument = getTypeDeclaration(paramName, dataType, param.getLength(),
-                    writeEnabled, true, monitor);
+                    writeEnabled, monitor);
 
             buf.append(argument);
 

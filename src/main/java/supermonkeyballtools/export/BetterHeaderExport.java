@@ -26,6 +26,10 @@ public class BetterHeaderExport {
         this.program = program;
     }
 
+    private static String namePrefix(String name) {
+        return "MKB(" + name + ")";
+    }
+
     private void genExternDecls(BetterDataTypeWriter typeWriter, Writer out) throws CancelledException, IOException {
         out.write("typedef void *pointer;" + EOL + EOL);
 
@@ -45,8 +49,8 @@ public class BetterHeaderExport {
             if (!cIdentifierPattern.matcher(s.getName()).matches()) continue;
 
             String vol = program.getMemory().getBlock(s.getAddress()).isVolatile() ? "volatile " : "";
-            String typeDecl = typeWriter.getTypeDeclaration(s.getName(), type, data.getLength(),
-                    false, false, TaskMonitor.DUMMY);
+            String typeDecl = typeWriter.getTypeDeclaration(namePrefix(s.getName()), type, data.getLength(),
+                    false, TaskMonitor.DUMMY);
             out.write("    extern " + vol + typeDecl + ";" + EOL);
         }
 
@@ -61,29 +65,62 @@ public class BetterHeaderExport {
             String name = func.getName();
             if (name.startsWith("FUN_")) continue;
             if (!cIdentifierPattern.matcher(name).matches()) continue;
+            name = namePrefix(name);
 
-            String funcDecl = typeWriter.getFunctionPointerString(def, func.getName(), null, false, TaskMonitor.DUMMY);
+            String funcDecl = typeWriter.getFunctionPointerString(def, name, null, false, TaskMonitor.DUMMY);
             out.write("    " + funcDecl + ";" + EOL);
         }
 
         out.write("#ifdef __cplusplus" + EOL);
         out.write("} // extern \"C\"" + EOL);
+        out.write("} // namespace mkb" + EOL);
         out.write("#endif" + EOL);
     }
 
-    public String genCppHeader() {
+    private void genPrelude(Writer writer) throws IOException {
+        writer.write("#pragma once" + EOL);
+        writer.write(EOL);
+
+        writer.write("#define MKB_CONCAT_IMPL(a, b) a##b" + EOL);
+        writer.write("#define MKB_CONCAT(a, b) MKB_CONCAT_IMPL(a, b)" + EOL);
+
+        writer.write("#ifdef __cplusplus" + EOL);
+        writer.write("#define MKB(name) name" + EOL);
+        writer.write("#else" + EOL);
+        writer.write("#define MKB(name) MKB_CONCAT(mkb_, name)" + EOL);
+        writer.write("#endif" + EOL);
+
+        writer.write("#ifdef __cplusplus" + EOL);
+        writer.write("namespace mkb {" + EOL);
+        writer.write("#endif" + EOL);
+        writer.write(EOL);
+    }
+
+    private void genPostlude(Writer writer) throws IOException {
+        writer.write(EOL);
+        writer.write("#undef MKB_CONCAT" + EOL);
+        writer.write("#undef MKB_CONCAT_IMPL" + EOL);
+        writer.write("#undef MKB" + EOL);
+    }
+
+    public String genCxxHeader() {
         // TODO write directly to a file instead of generating an intermediate String first
-        StringWriter buf = new StringWriter();
-        buf.write("#pragma once" + EOL + EOL);
-        BetterDataTypeWriter typeWriter;
+        StringWriter writer = new StringWriter();
+
         try {
-            typeWriter = new BetterDataTypeWriter(program.getDataTypeManager(), buf);
+            genPrelude(writer);
+
+            BetterDataTypeWriter typeWriter;
+            typeWriter = new BetterDataTypeWriter(program.getDataTypeManager(), writer);
             typeWriter.write(program.getDataTypeManager(), TaskMonitor.DUMMY);
-            genExternDecls(typeWriter, buf);
+            genExternDecls(typeWriter, writer);
+
+            genPostlude(writer);
+
         } catch (CancelledException | IOException e) {
             Msg.error(getClass(), e);
         }
 
-        return buf.toString();
+        return writer.toString();
     }
 }
