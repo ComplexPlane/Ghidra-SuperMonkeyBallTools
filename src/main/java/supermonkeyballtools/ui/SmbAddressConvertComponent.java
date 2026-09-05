@@ -242,7 +242,7 @@ public class SmbAddressConvertComponent extends ComponentProvider {
         // Generate stuff first so file dialog popping up indicates they're done
         // exporting
         String symbolMap = SymbolExport.generateSymbolMap(this.cursorLoc.getProgram(), mergeHeaps);
-        String header = betterHeaderExport.genCxxHeader();
+        String header = betterHeaderExport.genCppHeader();
 
         JFileChooser dialog = new JFileChooser();
         dialog.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
